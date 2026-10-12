@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Milo Academy Tournament Room Allocation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0a7f8f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="shim.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#fff;--tx:#0f1b20;--mu:#667a82;--ac:#0a7f8f;--ac2:#e8f5f7;--bd:#e4ebee;--bad:#c0392b;--ok:#1e8449;--wn:#b9770e;--sh:0 1px 2px rgba(15,27,32,.05),0 6px 18px rgba(15,27,32,.05);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.55 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.w{max-width:700px;margin:0 auto;padding:18px 16px 56px}
+h1{font-size:clamp(20px,5.4vw,24px);line-height:1.2;margin:0;font-weight:700;letter-spacing:-.02em}
+h2{font-size:18px;line-height:1.3;margin:0;font-weight:700;letter-spacing:-.015em}h3{font-size:16px;line-height:1.35;margin:0;font-weight:600;letter-spacing:-.005em}
+.mu{color:var(--mu);font-size:14px;line-height:1.45}.sm{font-size:12.5px}.eb{font-size:11.5px;color:var(--ac);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.hero{position:relative;overflow:hidden;display:flex;gap:14px;align-items:center;padding:16px;border-radius:20px;border:1px solid var(--bd);background:linear-gradient(135deg,#eef8fa,#fff 70%)}.hero .wv{position:absolute;right:0;bottom:0;width:75%;height:46px;pointer-events:none}.hero .bl{position:absolute;right:-22px;top:-26px;color:var(--ac);opacity:.09;pointer-events:none}.hero>div,.hero>img{position:relative}.lg{height:58px;width:auto;border-radius:10px}
+.card{border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh);padding:16px;margin-bottom:14px;background:#fff}
+.card.off{opacity:.6}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:500;padding:5px 11px;border-radius:99px;border:1px solid var(--bd);color:var(--tx);background:#fff;white-space:nowrap}
+.chip.a{background:var(--ac2);border-color:transparent;color:var(--ac);font-weight:600}
+details>summary{cursor:pointer;color:var(--ac);font-size:14.5px;font-weight:500;padding:8px 0;list-style:none}details>summary::-webkit-details-marker{display:none}
+details.dd{border:1px solid var(--bd);border-radius:14px;padding:0 14px;margin-bottom:10px;background:#fff}details.dd>summary{color:var(--tx);font-size:15.5px;font-weight:600;padding:14px 0}details.dd[open]>summary{border-bottom:1px solid var(--bd);margin-bottom:12px}details.dd>div{padding-bottom:14px}
+.sp{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;margin:10px 0}.sp img{height:48px;border-radius:6px;display:block;margin-top:4px}
+.help{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 0;padding:10px 14px;border-radius:12px;background:var(--ac2);font-size:14px}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;gap:4px;margin:16px -4px 16px;padding:6px 4px;background:#fff;border-bottom:1px solid var(--bd)}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:0;color:var(--mu);padding:6px 2px;border-radius:12px;font:inherit;font-size:12.5px;font-weight:500;min-height:54px}
+.tabs button.on{background:var(--ac);color:#fff;font-weight:600}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--mu)}
+input,select{font:inherit;font-size:16px;padding:10px 12px;min-height:44px;border:1px solid var(--bd);border-radius:10px;background:#fff;color:var(--tx);width:100%}
+input:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px}input.err{border-color:var(--bad);background:#fdf3f2}
+.g2{display:grid;grid-template-columns:1fr;gap:10px}.g3{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:560px){.g2{grid-template-columns:1fr 1fr}}
+button{font:inherit}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:14.5px;letter-spacing:.005em;min-height:38px;padding:0 16px;border-radius:10px;cursor:pointer;border:1px solid var(--ac);background:var(--ac);color:#fff;font-weight:600}
+.b.s{background:#fff;color:var(--ac)}.b.d{background:#fff;color:var(--bad);border-color:var(--bad)}.b.x{min-height:30px;padding:0 10px;font-size:12px}
+.b:disabled{opacity:.35;cursor:default}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.pill{font-size:12px;font-weight:600;letter-spacing:.02em;padding:2px 10px;border-radius:99px;border:1px solid currentColor;text-transform:capitalize;white-space:nowrap}
+.pill.pending{color:var(--wn)}.pill.confirmed{color:var(--ok)}.pill.cancelled{color:var(--bad)}
+.stp{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:12px;padding:3px}.stp b{min-width:28px;text-align:center}.stp .b{min-height:34px;width:34px;padding:0;font-size:18px}
+.nb{display:inline-block;background:var(--ac2);color:var(--ac);font-weight:650;font-size:13px;padding:3px 12px;border-radius:99px}
+.meter{height:8px;border-radius:99px;background:#eef3f4;overflow:hidden;margin:10px 0 6px}.meter i{display:block;height:100%;background:var(--ok);border-radius:99px}
+.av{width:40px;height:40px;border-radius:12px;background:var(--ac2);color:var(--ac);display:grid;place-items:center;font-weight:700;font-size:18px;flex:none}
+.ph{display:flex;gap:12px;align-items:center}
+.room{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 0;border-top:1px solid var(--bd);align-items:center}
+.room .act{grid-column:1/-1;margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.price{font-weight:700;font-size:16px;text-align:end;font-variant-numeric:tabular-nums;letter-spacing:-.01em}.warn{color:var(--wn);font-size:12px;font-weight:600}
+.tl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin:12px 0 4px}.dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--bd);flex:none}.dot.on{background:var(--ac);border-color:var(--ac)}.dot.bad{background:var(--bad);border-color:var(--bad)}.ln{flex:1;height:2px;background:var(--bd)}.ln.on{background:var(--ac)}
+.big{font-size:32px;line-height:1.1;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums;margin:2px 0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}@media(min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{border:1px solid var(--bd);border-radius:14px;padding:12px;box-shadow:var(--sh)}.stat b{display:block;font-size:24px;line-height:1.15;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.stat span{font-size:12.5px;color:var(--mu)}
+.bar{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid var(--bd);box-shadow:0 8px 28px rgba(15,27,32,.18)}
+.ov{position:fixed;inset:0;background:rgba(10,20,25,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+@media(min-width:560px){.ov{align-items:center}.sheet{border-radius:20px}}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}.kv span:nth-child(odd){color:var(--mu)}
+.call{color:var(--ac);font-weight:650;text-decoration:none;white-space:nowrap}.ic{flex:none;vertical-align:-3px}.age{font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px;background:var(--ac2);color:var(--ac)}.nd{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-inline-start:5px}.eb{display:flex;align-items:center;gap:6px}.empty{text-align:center;padding:28px 14px}.empty .ci{width:60px;height:60px;border-radius:50%;background:var(--ac2);color:var(--ac);display:grid;place-items:center;margin:0 auto 12px}details.dd>summary{display:flex;align-items:center;gap:8px}
+.ok{background:#f1faf4;border-color:#cfe9d8}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:#0f1b20;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;max-width:90vw;opacity:0;pointer-events:none;transition:.25s;z-index:80}.toast.show{opacity:1;transform:translate(-50%,0)}
+.sk{height:84px;border-radius:16px;background:linear-gradient(90deg,#f1f5f6,#e9eff1,#f1f5f6);background-size:200% 100%;animation:sh 1.2s infinite;margin-bottom:14px}@keyframes sh{to{background-position:-200% 0}}
+.rate{display:flex;gap:8px}.rate input{width:90px;min-height:38px;padding:6px 8px}
+.fl{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.fl .chip{cursor:pointer;min-height:32px;display:inline-flex;align-items:center}
+
+/* compact professional scale */
+body{font-size:14px;line-height:1.5}
+.w{padding:14px 14px 48px}
+h1{font-size:clamp(17px,4.8vw,20px);letter-spacing:-.015em}
+h2{font-size:15.5px}h3{font-size:14.5px}
+.mu{font-size:13px}.sm{font-size:11.5px}.eb{font-size:10.5px;letter-spacing:.07em}
+.hero{padding:14px;border-radius:16px;gap:12px}.lg{height:46px}
+.card{padding:14px;border-radius:14px;margin-bottom:12px}
+.chip{font-size:11.5px;padding:3px 9px}
+.tabs{margin:12px -4px;padding:4px}
+.tabs button{font-size:11.5px;min-height:46px;gap:2px;border-radius:10px}
+label{font-size:12px;gap:4px}
+input,select{font-size:16px;min-height:42px;padding:8px 11px;border-radius:9px}
+@media (hover:hover) and (pointer:fine){input,select{font-size:14px;min-height:38px}}
+.b{font-size:13.5px;min-height:36px;padding:0 14px;border-radius:9px}
+.b.x{font-size:12px;min-height:30px;padding:0 10px}
+.pill{font-size:11px;padding:1px 9px}
+.price{font-size:14.5px}
+.big{font-size:26px}
+.stat{padding:10px 12px;border-radius:12px}.stat b{font-size:20px}.stat span{font-size:11.5px}
+.nb{font-size:12px;padding:2px 10px}
+.stp{border-radius:10px}.stp b{font-size:14px}.stp .b{min-height:32px;width:32px}
+.room{padding:10px 0}
+details>summary{font-size:13px}details.dd>summary{font-size:14px;padding:12px 0}
+.help{font-size:13px;padding:9px 12px;border-radius:10px}
+.kv{font-size:13px}.av{width:36px;height:36px;border-radius:10px}
+.toast{font-size:13px}.age{font-size:11px;padding:1px 9px}
+.bar{padding:10px 12px;border-radius:14px}.sheet{padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px))}
+button,a{-webkit-tap-highlight-color:transparent}.b:active{transform:scale(.98)}
+.b:focus-visible,.tabs button:focus-visible,a:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.pill.paid{color:var(--ok)}.pill.partial{color:var(--wn)}.pill.unpaid{color:var(--mu)}
+input[type=tel],input[type=number]{direction:ltr}
+details>summary .pill{margin-inline-start:6px}
+html[lang=dv] body{font-family:Faruma,"MV Boli","Noto Sans Thaana","Thaana Sangam MN",Inter,system-ui,sans-serif;font-size:15px;line-height:1.75}
+html[lang=dv] *{letter-spacing:0!important}
+html[lang=dv] .mu{font-size:14px}html[lang=dv] .b,html[lang=dv] .chip,html[lang=dv] label{font-size:14px}
+html[lang=dv] .hero{padding-top:44px}
+</style></head><body><div class="w">
+<div class="hero"><svg class="wv" viewBox="0 0 600 90" preserveAspectRatio="none" aria-hidden="true"><path d="M0 45Q75 5 150 45T300 45T450 45T600 45V90H0Z" fill="rgba(10,127,143,.10)"/><path d="M0 64Q75 30 150 64T300 64T450 64T600 64V90H0Z" fill="rgba(10,127,143,.08)"/></svg><svg class="bl" width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7l4 3-1.5 5h-5L8 10zM12 2v5M16 10l5-1.5M14.5 15l3 4M9.5 15l-3 4M8 10L3 8.5"/></svg><button class="b s x" id="lg" data-nt onclick="setLang()" style="position:absolute;top:10px;inset-inline-end:10px;z-index:3;background:#fff">ދިވެހި</button><img class="lg" src="data:image/jpeg;base64,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" alt="Milo Academy Championship"><div><div class="eb" data-i="cal">Hanimaadhoo · 11 – 13 Nov 2026</div><h1>Milo Academy Tournament Room Allocation</h1></div></div>
+<details><summary>Event details</summary>
+<div class="chips" style="margin-top:0"><span class="chip" data-i="pin">Hanimaadhoo Stadium</span><span class="chip" data-i="user">Under 10 · born on or after 2016</span><span class="chip" data-i="user">Under 12 · born on or after 2014</span><span class="chip" data-i="users">Max 12 players per team</span></div>
+<p class="mu" style="margin:10px 0 0">Open for all academies · SVAM 7884788</p>
+<div class="sp"><div class="mu sm">Main sponsor<img src="data:image/jpeg;base64,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" alt="Nestlé Milo"></div><div class="mu sm">Organised by<img src="data:image/jpeg;base64,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" alt="Soccer Veterans Association of Maldives"></div></div>
+<p class="mu sm" style="margin:0">Collaborating partners: Ministry of Youth Empowerment, Sports &amp; Fitness · Football Association of Maldives · Secretariat of Hanimaadhoo Council</p></details>
+<div id="focal"></div>
+<div class="tabs" id="tabs"></div>
+<div id="app"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+let db=null,user=null,uidv='',admin=false,props=[],books=[],focal='',dir=[],tab='book',phoneQ='',need=1,cart={},showForm=false,fmsg='',errs={},loaded=false,justBooked='',filt='all',qtxt='',openP={},G={},ed=null,armed='',seen={},fresh=[],teams=[],tf='all',tq='',lang='en',ppr=4,pays=[],rc=null,lkRef='',bAges={},mt='bookings',CF={};
+try{seen=JSON.parse(localStorage.getItem('mil_seen')||'{}')}catch(e){}
+try{lang=localStorage.getItem('mil_lang')==='dv'?'dv':'en'}catch(e){}
+const today=()=>new Date().toISOString().slice(0,10);
+const addDays=(d,n)=>{const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
+let ci='2026-11-11',co='2026-11-14';
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const nts=(a,b)=>Math.max(0,Math.round((new Date(b)-new Date(a))/864e5));
+const nights=()=>nts(ci,co);
+const fmt=d=>{const x=new Date(d+'T00:00:00Z');if(lang==='dv')return WD[x.getUTCDay()]+' '+x.getUTCDate()+' '+MD[x.getUTCMonth()]+' '+x.getUTCFullYear();return x.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})};
+const money=v=>'MVR '+Number(v||0).toLocaleString('en-US');
+const tel=p=>String(p||'').replace(/[^0-9+]/g,'');
+const live=b=>b.status!=='cancelled';
+const hit=(b,pid,rid)=>b.pid===pid&&b.rid===rid&&live(b)&&ci<b.out&&co>b.in;
+const qty=r=>r.qty||1;
+const used=(pid,rid)=>books.filter(b=>hit(b,pid,rid)).reduce((s,b)=>s+(b.rooms||1),0);
+const left=(p,r)=>Math.max(0,qty(r)-used(p.id,r.id));
+const leftOf=p=>(p.rooms||[]).reduce((s,r)=>s+left(p,r),0);
+const $=id=>document.getElementById(id);
+const IC={
+cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+pin:'<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0116 0z"/><circle cx="12" cy="10" r="3"/>',
+bed:'<path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8M4 10V6a2 2 0 012-2h12a2 2 0 012 2v4M12 4v6M2 18h20"/>',
+phone:'<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/>',
+user:'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+users:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8"/>',
+check:'<path d="M20 6L9 17l-5-5"/>',
+checkc:'<circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',x:'<path d="M18 6L6 18M6 6l12 12"/>',
+arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>',
+wifi:'<path d="M5 12.5a10 10 0 0114 0M8.5 16a5 5 0 017 0M2 9a15 15 0 0120 0"/><circle cx="12" cy="19.5" r="1"/>',
+snow:'<path d="M12 2v20M4.9 7l14.2 10M4.9 17L19.1 7"/>',
+tv:'<rect x="2" y="7" width="20" height="13" rx="2"/><path d="M17 2l-5 5-5-5"/>',
+drop:'<path d="M12 2.7S5 10 5 14.5a7 7 0 0014 0C19 10 12 2.7 12 2.7z"/>',
+shirt:'<path d="M20.4 6.5L16 3a4 4 0 01-8 0L3.6 6.5a1 1 0 00-.3 1.3l1.7 3a1 1 0 001.2.5L8 10.6V20a1 1 0 001 1h6a1 1 0 001-1v-9.7l1.8.5a1 1 0 001.2-.5l1.7-3a1 1 0 00-.3-1.3z"/>',
+car:'<path d="M5 17H3v-5l2-5a2 2 0 012-1.5h10A2 2 0 0119 7l2 5v5h-2M5 12h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/>',
+bell:'<path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 003.4 0"/>',
+cup:'<path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4zM6 2v3M10 2v3M14 2v3"/>',
+utensils:'<path d="M3 2v7a3 3 0 003 3 3 3 0 003-3V2M6 2v20M18 22V2c-2.5 1-4 4-4 8s1.5 5 4 5"/>',
+park:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 010 6H9"/>',
+building:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 21v-4h6v4"/>',
+list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+compass:'<circle cx="12" cy="12" r="10"/><path d="M16 8l-2 6-6 2 2-6z"/>',
+send:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',download:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'};
+const I=(n,s=18,w=1.8)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]||''}</svg>`;
+const empty=(i,m)=>`<div class="card empty"><div class="ci">${I(i,28)}</div><div class="mu">${m}</div></div>`;
+const cs=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
+const ico=a=>{a=a.toLowerCase();return I(/wifi|internet/.test(a)?'wifi':/air|a\/c|fan/.test(a)?'snow':/breakfast|meal|restaurant/.test(a)?'utensils':/tv/.test(a)?'tv':/bath|shower|toilet/.test(a)?'drop':/laund/.test(a)?'shirt':/airport|transport|transfer|shuttle/.test(a)?'car':/desk|reception/.test(a)?'bell':/tea|coffee|bar/.test(a)?'cup':/park/.test(a)?'park':'check',14)};
+const amen=p=>(p.amenities&&p.amenities.length)?`<div class="chips">${p.amenities.map(a=>`<span class="chip">${ico(a)} ${esc(a)}</span>`).join('')}</div>`:'';
+const pill=s=>`<span class="pill ${esc(s)}">${esc(s)}</span>`;
+const refOf=g=>String(g[0].grp||g[0].id).slice(-6).toUpperCase();
+const groupsOf=l=>{const g={};l.forEach(b=>{const k=b.grp||b.id;(g[k]=g[k]||[]).push(b)});return g};
+const mine=()=>{const ph=phoneQ.replace(/\s/g,''),rf=lkRef.trim().toUpperCase(),ids=new Set();Object.values(groupsOf(books)).forEach(l=>{if(l.some(b=>uidv&&b.uid===uidv)||(rf&&ph&&refOf(l)===rf&&l.some(b=>String(b.phone||'').replace(/\s/g,'')===ph)))l.forEach(b=>ids.add(b.id))});return books.filter(b=>ids.has(b.id))};
+const saveSeen=()=>{try{localStorage.setItem('mil_seen',JSON.stringify(seen))}catch(e){}};
+const markSeen=()=>{mine().forEach(b=>{seen[b.id]=b.status});saveSeen();fresh=[]};
+const intl=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===7)d='960'+d;return d};
+function checkNotes(){
+  const f=[];Object.entries(groupsOf(mine())).forEach(([k,l])=>{const st=[...new Set(l.map(b=>b.status))];
+    if(l.some(b=>seen[b.id]!==b.status)&&st.length===1&&(st[0]==='confirmed'||st[0]==='cancelled'))f.push({k,ref:refOf(l),status:st[0]})});
+  const nw=f.filter(x=>!fresh.some(y=>y.k===x.k&&y.status===x.status));fresh=f;
+  nw.forEach(x=>{say('Booking '+x.ref+' '+x.status);try{if(window.Notification&&Notification.permission==='granted')new Notification('Milo Academy Championship',{body:'Your booking '+x.ref+' is '+x.status+'.'})}catch(e){}});
+}
+const freshBanner=()=>fresh.map(f=>{const ok=f.status==='confirmed';return `<div class="card ${ok?'ok':''}" style="${ok?'':'border-color:#f0c9c5;background:#fdf3f2'}"><div class="top"><div style="display:flex;gap:8px;align-items:center;font-weight:700;color:${ok?'var(--ok)':'var(--bad)'}">${I(ok?'checkc':'bell',20)}Booking ${esc(f.ref)} ${f.status}</div>${tab!=='stay'?`<button class="b s x" onclick="goTab('stay')">View</button>`:''}</div><div class="mu">${ok?'The organisers have confirmed your rooms.':'This booking was cancelled by the organisers.'}</div></div>`}).join('');
+function ask(k,fn){if(armed===k){armed='';fn();return}armed=k;render();setTimeout(()=>{if(armed===k){armed='';render()}},4000)}
+function askNotify(){try{Notification.requestPermission().then(p=>{say(p==='granted'?'Alerts turned on':'Alerts are blocked by your browser');render()},()=>say('Alerts are not available here'))}catch(e){say('Alerts are not available here')}}
+function copyText(txt,m){try{navigator.clipboard.writeText(txt).then(()=>say(m),()=>say('Copy not available here'))}catch(e){say('Copy not available here')}}
+let tt;function say(m){const e=$('toast');e.textContent=L(m);e.className='toast show';clearTimeout(tt);tt=setTimeout(()=>{e.className='toast'},4500)}
+function goTab(k){tab=k;justBooked='';render();window.scrollTo&&window.scrollTo(0,0)}
+
+async function init(){
+  try{
+    if(window.claude&&claude.use){
+      user=await claude.use('user');admin=!!(user&&((await user.isOwner())||(await user.canEdit())));
+      try{uidv=(user&&user.id&&await user.id())||''}catch(e){}
+      db=await claude.use('db');
+    }
+  }catch(e){}
+  if(db){
+    db.collection('properties').onSnapshot(s=>{props=s.docs.map(d=>({id:d.id,...d.data()}));loaded=true;render()});
+    db.collection('bookings').onSnapshot(s=>{books=s.docs.map(d=>({id:d.id,...d.data()}));render()});
+    db.doc('settings/main').onSnapshot(s=>{focal=(s.exists&&s.data().focal)||'';ppr=(s.exists&&+s.data().ppr)||4;render()});
+    db.collection('payments').onSnapshot(s=>{pays=s.docs.map(d=>({id:d.id,...d.data()}));render()});
+    db.collection('teams').onSnapshot(s=>{teams=s.docs.map(d=>({id:d.id,...d.data()}));render()});
+    db.collection('directory').onSnapshot(s=>{dir=s.docs.map(d=>({id:d.id,...d.data()}));render()});
+  }else loaded=true;
+  render();
+}
+function render(){
+  if(tab==='manage'&&!admin)tab='book';
+  G=groupsOf(books);CF=conflicts();checkNotes();
+  const vals={};document.querySelectorAll('#app input,#app select').forEach(e=>{if(e.id)vals[e.id]=e.value});
+  const fid=document.activeElement&&document.activeElement.id;
+  const fp=(focal.match(/\+?\d[\d\s-]{5,}\d/)||[''])[0];
+  $('focal').innerHTML=focal?`<div class="help"><span>Need help with rooms? <b>${esc(focal)}</b></span>${fp?`<a class="call" href="tel:${esc(tel(fp))}" style="display:inline-flex;gap:6px;align-items:center">${I('phone',16)}Call</a>`:''}</div>`:'';
+  const TI={book:'bed',stay:'list',info:'compass',teams:'users',manage:'sliders'};const T=[['book','Book'],['stay','My stay'],['teams','Teams'],['info','Info'],...(admin?[['manage','Manage']]:[])];
+  $('tabs').innerHTML=T.map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="goTab('${k}')">${I(TI[k],20)}<span>${l}${(k==='stay'&&fresh.length&&tab!=='stay')||(k==='manage'&&Object.keys(CF).length&&tab!=='manage')?'<i class="nd"></i>':''}</span></button>`).join('');
+  $('app').innerHTML=(tab==='book'&&fresh.length?freshBanner():'')+(tab==='manage'&&admin?manageView():tab==='stay'?stayView():tab==='info'?infoView():tab==='teams'?teamsView():bookView())+editModal()+rcModal()+acl();
+  for(const id in vals){const e=$(id);if(e&&e.value!==vals[id]&&e.type!=='date')e.value=vals[id]}
+  if(fid&&$(fid)&&$(fid).focus){$(fid).focus()}
+  if(tab==='stay'&&fresh.length)markSeen();
+  if(document.body)document.body.style.overflow=((showForm&&tab==='book'&&sel()>0)||ed||rc)?'hidden':'';
+  applyLang();
+}
+const sel=()=>Object.values(cart).reduce((s,c)=>s+c,0);
+function find(key){const[a,b]=key.split('|');const p=props.find(x=>x.id===a),r=p&&(p.rooms||[]).find(x=>x.id===b);return[p,r]}
+function setNeed(d){need=Math.max(1,sel(),need+d);render()}
+function tourn(){ci='2026-11-11';co='2026-11-14';cart={};showForm=false;render()}
+function bump(key,d){
+  const[p,r]=find(key);if(!r)return;const c=(cart[key]||0)+d;
+  if(d>0&&sel()>=need)need=sel()+1;
+  if(c<=0)delete cart[key];else if(c<=left(p,r))cart[key]=c;
+  if(!sel())showForm=false;render();
+}
+function stats(){
+  let total=0,booked=0;const bl=[],vl=[];
+  props.forEach(p=>(p.rooms||[]).forEach(r=>{const q=qty(r),u=Math.min(q,used(p.id,r.id));total+=q;booked+=u;if(q-u>0)vl.push(`${esc(p.name)} · ${esc(r.name)} — ${q-u} vacant`)}));
+  books.filter(b=>live(b)&&ci<b.out&&co>b.in).forEach(b=>bl.push(`${esc(b.prop)} · ${esc(b.room)} × ${b.rooms||1} ${admin?' — '+esc(b.org||b.guest):''}${b.status==='pending'?' (pending)':''}`));
+  return{total,booked,vac:total-booked,bl,vl};
+}
+const li=a=>a.length?a.map(x=>`<div class="mu" style="padding:3px 0">${x}</div>`).join(''):'<div class="mu">None</div>';
+function bookView(){
+  const n=nights();
+  for(const k in cart){const[p,r]=find(k);if(!r||cart[k]>left(p,r))delete cart[k]}
+  const s=sel(),st=stats();
+  let h=`<div class="card"><div class="top"><h2>Find rooms</h2><button class="b s x" onclick="tourn()">${I('cal',14)}Tournament dates</button></div>
+  <div class="g3" style="margin-top:12px"><label>Check-in<input type="date" id="ci" min="${today()}" value="${ci}" onchange="ci=this.value;if(co<=ci)co=addDays(ci,1);cart={};showForm=false;render()"></label>
+  <label>Check-out<input type="date" id="co" min="${addDays(ci,1)}" value="${co}" onchange="co=this.value;cart={};showForm=false;render()"></label></div>
+  <div class="top" style="margin-top:14px"><div><div style="font-weight:600">Rooms needed</div><span class="nb">${n} night${n===1?'':'s'}</span></div>
+  <div class="stp"><button class="b s" aria-label="Fewer rooms" onclick="setNeed(-1)">${I('minus',16)}</button><b>${need}</b><button class="b s" aria-label="More rooms" onclick="setNeed(1)">${I('plus',16)}</button></div></div></div>`;
+  if(!loaded)return h+'<div class="sk"></div><div class="sk"></div>';
+  if(!db)return h+`<div class="card mu">Could not connect. Please check your internet connection and reload the page.</div>`;
+  if(!props.length)return h+empty('building','No properties listed yet.'+(admin?' Open the Manage tab to add one.':''));
+  const pct=st.total?Math.round(st.vac/st.total*100):0;
+  h+=`<div class="card"><div class="top"><h3 style="display:flex;gap:8px;align-items:center">${I('bed',18)}Room availability</h3><span class="mu">${st.vac} of ${st.total} vacant</span></div><div class="meter"><i style="width:${pct}%"></i></div>
+  <div class="mu">${st.total} total · ${st.booked} booked · ${st.vac} vacant for these dates</div>
+  <details><summary>Booked rooms (${st.booked})</summary>${li(st.bl)}</details><details><summary>Vacant rooms (${st.vac})</summary>${li(st.vl)}</details></div>`;
+  h+=`<div style="margin:18px 0 10px"><h2>Available rooms</h2><div class="mu">Pick rooms from one or more properties. You need ${need} room${need>1?'s':''}.</div></div>`;
+  [...props].sort((a,b)=>(leftOf(b)>0)-(leftOf(a)>0)).forEach(p=>{
+    const rooms=p.rooms||[],lo=leftOf(p),rates=rooms.filter(r=>r.rate>0).map(r=>r.rate);
+    h+=`<div class="card ${rooms.length&&lo<=0?'off':''}"><div class="ph"><div class="av">${I('building',22)}</div><div style="flex:1;min-width:0"><h3>${esc(p.name)}</h3><div class="mu">${esc(p.type||'')}${p.desc?' · '+esc(p.desc):''}</div></div>
+    <div style="text-align:end"><div class="${lo>0?'':'mu'}" style="font-weight:650;font-size:13px">${rooms.length?(lo>0?lo+' left':'Full'):''}</div>${rates.length?`<div class="mu sm">from ${money(Math.min(...rates))}</div>`:''}</div></div>${amen(p)}`;
+    rooms.forEach(r=>{
+      const lf=left(p,r),key=p.id+'|'+r.id,c=cart[key]||0;
+      h+=`<div class="room"><div><b>${esc(r.name)}</b><div class="mu">${lf>0?'':'Fully booked'}${lf>0&&lf<=2?`<span class="warn">Only ${lf} left</span>`:lf>2?lf+' available':''}</div></div>
+      <div><div class="price">${r.rate?money(r.rate):'Rate TBC'}</div><div class="mu sm" style="text-align:end">${r.rate?'per room / night':''}</div></div>
+      <div class="act"><span class="mu">${c&&r.rate?money(r.rate*c*n)+' for '+c:''}</span>${lf<=0?'<span class="pill cancelled">Booked</span>':n<1?'<span class="mu">Choose valid dates</span>':`<div class="stp"><button class="b s" ${c?'':'disabled'} aria-label="Remove one" onclick="bump('${key}',-1)">${I('minus',16)}</button><b>${c}</b><button class="b s" ${c<lf?'':'disabled'} aria-label="Add one" onclick="bump('${key}',1)">${I('plus',16)}</button></div>`}</div></div>`;
+    });
+    if(!rooms.length)h+=`<div class="mu" style="margin-top:10px">Rooms coming soon.</div>`;
+    h+='</div>';
+  });
+  if(s>0){
+    let tot=0,lines='';
+    Object.entries(cart).forEach(([k,c])=>{const[p,r]=find(k);tot+=r.rate*c*n;lines+=`<div class="top" style="padding:5px 0"><span>${esc(p.name)} · ${esc(r.name)} × ${c}</span><span class="mu">${r.rate?money(r.rate*c*n):'Rate TBC'}</span></div>`});
+    h+=`<div class="bar"><div><b>${s} of ${need} room${need>1?'s':''} selected</b><div class="mu">${tot?money(tot)+' total':'Rate to be confirmed'}</div></div><button class="b" onclick="fmsg='';errs={};showForm=true;render();setTimeout(()=>{const e=$('go');e&&e.focus()},60)">Book now${I('arrow',16)}</button></div>`;
+    if(showForm)h+=`<div class="ov" onclick="if(event.target===this){showForm=false;render()}"><div class="sheet">
+    <div class="top"><h2>Complete your booking</h2><button class="b s x" aria-label="Close" onclick="showForm=false;render()">${I('x',16)}</button></div>
+    ${fmsg?`<div class="help" style="background:#fdf3f2;color:var(--bad)">${esc(fmsg)}</div>`:''}
+    <div class="mu" style="margin:10px 0 6px;display:flex;gap:6px;align-items:center">${I('cal',15)}${fmt(ci)} → ${fmt(co)} · ${n} night${n>1?'s':''}</div>${lines}
+    <div class="top" style="padding:10px 0;border-top:1px solid var(--bd);margin:6px 0 12px"><b>${s} room${s>1?'s':''}</b><b style="font-size:18px">${tot?money(tot):'Rate to be confirmed'}</b></div>
+    <div class="g2"><label>Academy / club<input id="go" list="acl" class="${errs.go?'err':''}" autocomplete="organization" placeholder="e.g. Hanimaadhoo Academy"></label><label>Contact person<input id="gn" class="${errs.gn?'err':''}" autocomplete="name"></label><label>Phone / Viber<input id="gp" class="${errs.gp?'err':''}" type="tel" inputmode="tel" autocomplete="tel"></label><label>Number of players<input id="gpl" type="number" min="1" inputmode="numeric" class="${errs.gpl?'err':''}"></label><label>Arrival time (on check-in day)<input id="gat" type="time" class="${errs.gat?'err':''}"></label></div>
+    <div style="margin-top:10px"><div class="mu" style="margin-bottom:6px">Age group</div><div class="fl" style="margin:0">${['U10','U12'].map(a=>`<span class="chip ${bAges[a]?'a':''}" style="${errs.ga?'border-color:var(--bad)':''}" onclick="bAges['${a}']=!bAges['${a}'];render()">${a==='U10'?'Under 10':'Under 12'}</span>`).join('')}</div></div>
+    <p class="mu sm" style="margin:12px 0 0">Your request is held as pending until the organisers confirm it.</p>
+    <div class="acts"><button class="b" onclick="book()">${I('check',16)}Confirm booking</button><button class="b s" onclick="showForm=false;render()">Back</button></div></div></div>`;
+  }
+  return h;
+}
+async function book(){
+  const org=$('go').value.trim(),name=$('gn').value.trim(),phone=$('gp').value.trim(),n=nights(),pl=+$('gpl').value||0,ag=ages(),at=$('gat').value;
+  errs={go:!org,gn:!name,gp:phone.replace(/\D/g,'').length<7,gpl:pl<1,ga:!ag.length,gat:!at};
+  if(errs.go||errs.gn||errs.gp||errs.gpl||errs.ga||errs.gat){fmsg='Please complete the highlighted fields.';return render()}
+  const mp=maxPl(org,ag);if(mp&&pl>mp){errs.gpl=true;fmsg='The maximum is '+mp+' players for this academy in the age groups chosen (12 per team).';return render()}
+  const ent=Object.entries(cart).filter(([k,c])=>c>0);
+  for(const[k,c]of ent){const[p,r]=find(k);if(c>left(p,r)){showForm=false;render();return say('Availability changed for '+p.name+' · '+r.name+'. Please review your selection.')}}
+  const grp=uid();let cnt=0;
+  try{
+    for(const[k,c]of ent){const[p,r]=find(k);cnt+=c;
+      const bid=uid();seen[bid]='pending';await db.collection('bookings').doc(bid).set({uid:uidv,grp,pid:p.id,rid:r.id,prop:p.name,room:r.name,org,guest:name,phone,rooms:c,ages:ag,players:pl,arrive:at,in:ci,out:co,total:r.rate*c*n,status:'pending',at:new Date().toISOString()})}
+    saveSeen();phoneQ=phone;lkRef=grp.slice(-6).toUpperCase();bAges={};cart={};showForm=false;fmsg='';errs={};tab='stay';justBooked=grp.slice(-6).toUpperCase();
+  }catch(e){fmsg=(e.code==='not_granted'||/permission|granted/i.test(e.message||'')?'You do not have permission to do this. Please contact the organisers. ':'Could not save booking: ')+(e.message||e.code||'');return render()}
+  render();window.scrollTo&&window.scrollTo(0,0);
+}
+function copyG(k){
+  const g=G[k];if(!g)return;const b0=g[0],nn=nts(b0.in,b0.out);
+  const txt=['Milo Academy Championship – room booking','Reference: '+refOf(g),'Academy / club: '+(b0.org||''),'Dates: '+fmt(b0.in)+' to '+fmt(b0.out)+' ('+nn+' nights)',...g.map(b=>b.prop+' – '+b.room+' × '+(b.rooms||1)+' – '+(b.total?money(b.total):'rate TBC')),'Total: '+money(g.filter(live).reduce((s,b)=>s+(b.total||0),0)),'Status: '+[...new Set(g.map(b=>b.status))].join(', ')].join('\n');
+  const ok=()=>say('Booking details copied');
+  try{navigator.clipboard.writeText(txt).then(ok,()=>say('Copy not available here'))}catch(e){say('Copy not available here')}
+}
+function stayView(){
+  const m=mine();
+  let h='';
+  if(justBooked)h+=`<div class="card ok"><div style="font-weight:700;display:flex;gap:8px;align-items:center;color:var(--ok)">${I('checkc',20)}Booking request sent</div><div class="mu">Reference <b>${esc(justBooked)}</b>. You will see a notice here as soon as the organisers confirm your rooms.</div></div>`;
+  h+=freshBanner();
+  if(window.Notification&&Notification.permission==='default')h+=`<div class="help" style="margin:0 0 14px"><span style="display:flex;gap:8px;align-items:center">${I('bell',16)}Get an alert when your booking is confirmed</span><button class="b s x" onclick="askNotify()">Turn on</button></div>`;
+  h+=`<details class="dd" ${m.length?'':'open'}><summary>Find a booking with its reference</summary><div class="g2"><label>Reference code<input id="lr" value="${esc(lkRef)}" placeholder="e.g. 7K2M9Q" onchange="lkRef=this.value;render()"></label><label>Phone number<input id="pq" type="tel" inputmode="tel" placeholder="Phone used for booking" value="${esc(phoneQ)}" onchange="phoneQ=this.value;render()"></label></div></details>`;
+  if(!m.length)return h+empty('list','No bookings yet. Choose rooms in the Book tab to get started.');
+  const gs={};m.forEach(b=>{const k=b.grp||b.id;(gs[k]=gs[k]||[]).push(b)});
+  const groups=Object.entries(gs).sort((a,b)=>a[1][0].in.localeCompare(b[1][0].in));
+  const act=m.filter(live),pay=act.reduce((s,b)=>s+(b.total||0),0),nr=act.reduce((s,b)=>s+(b.rooms||1),0),tbc=act.some(b=>!b.total);
+  h+=`<div class="card"><div class="mu">Total to pay</div><div class="big">${money(pay)}</div><div class="mu">${nr} room${nr===1?'':'s'} · ${groups.length} booking${groups.length===1?'':'s'}${tbc?' · some rates still to be confirmed':''}${act.some(b=>b.status==='pending')?' · waiting for confirmation':''}</div></div>`;
+  groups.forEach(([k,g])=>{
+    const b0=g[0],nn=nts(b0.in,b0.out),gl=g.filter(live),gt=gl.reduce((s,b)=>s+(b.total||0),0),sts=[...new Set(g.map(b=>b.status))],mixed=sts.length>1,one=sts.length===1?sts[0]:'';
+    const ps=[...new Set(g.map(b=>b.pid))].map(id=>props.find(x=>x.id===id)).filter(Boolean);
+    h+=`<div class="card"><div class="top"><div><div class="mu sm">Ref ${esc(refOf(g))}</div><h3>${esc(b0.org||'Booking')}</h3></div><span>${sts.map(pill).join(' ')}</span></div>
+    <div class="tl">${one==='cancelled'?'<span class="dot bad"></span>Cancelled':`<span class="dot on"></span>Requested<span class="ln ${one==='confirmed'?'on':''}"></span><span class="dot ${one==='confirmed'?'on':''}"></span>Confirmed`}</div>
+    <div class="mu" style="margin:6px 0;display:flex;gap:6px;align-items:center">${I('cal',15)}${fmt(b0.in)} → ${fmt(b0.out)} · ${nn} night${nn===1?'':'s'}</div>${plLine(b0)}${CF[k]?'<div class="help" style="background:#fff7e6;color:var(--wn);margin:8px 0">Another booking also covers some of your rooms. The organisers will contact you to sort it out.</div>':''}`
+    +g.map(b=>{const r=b.rooms||1;return `<div class="room"><div><b>${esc(b.prop)}</b><div>${esc(b.room)} × ${r}</div><div class="mu sm">${b.total&&nn?money(Math.round(b.total/(r*nn)))+' per room / night × '+nn:'Rate to be confirmed'}</div></div><div><div class="price">${b.total?money(b.total):'TBC'}</div>${mixed?`<div style="text-align:end">${pill(b.status)}</div>`:''}</div></div>`}).join('')
+    +`<div class="top" style="padding:12px 0 4px;border-top:1px solid var(--bd)"><b>${gl.length?'Total to pay':'Cancelled'}</b><b style="font-size:18px">${gl.length?money(gt):'—'}</b></div>${gl.length?payRows(k,gt):''}`
+    +ps.map(p=>`<div style="margin-top:12px"><b>${esc(p.name)}</b><div class="mu">${[p.desc,p.phone].filter(Boolean).map(esc).join(' · ')}</div>${amen(p)}</div>`).join('')
+    +allocBlock(g)+`<p class="mu sm" style="margin:12px 0 0">Booked by ${esc(b0.guest)} · ${esc(b0.phone)}</p>
+    <div class="acts">${gl.length?`<button class="b x" onclick="editG('${esc(k)}')">${I('edit',14)}Edit booking</button>`:''}<button class="b s x" onclick="copyG('${esc(k)}')">${I('copy',14)}Copy details</button>${paidOf(k)>0?`<button class="b s x" onclick="rc='${esc(k)}';render()">${I('list',14)}Receipt</button>`:''}${gl.length?`<button class="b d x" onclick="ask('cg${esc(k)}',()=>cancelG('${esc(k)}'))">${armed==='cg'+k?'Tap again to cancel':'Cancel booking'}</button>`:''}${ps.filter(p=>p.phone).map(p=>`<a class="call sm" href="tel:${esc(tel(p.phone))}" style="display:inline-flex;gap:5px;align-items:center">${I('phone',14)}Call ${esc(p.name)}</a>`).join('')}</div></div>`;
+  });
+  return h;
+}
+function infoView(){
+  let h=`<div style="margin-bottom:12px"><h2>Local info</h2><div class="mu">Taxis, restaurants and cafes on Hanimaadhoo. Tap a number to call.</div></div>`;
+  [['Taxi','Taxi','car'],['Restaurant','Restaurants','utensils'],['Cafe','Cafes','cup']].forEach(([k,l,ic])=>{
+    const a=dir.filter(x=>x.type===k).sort((x,y)=>(x.name||'').localeCompare(y.name||''));
+    h+=`<div class="card"><h3 style="display:flex;gap:10px;align-items:center"><span class="av" style="width:34px;height:34px;border-radius:10px">${I(ic,18)}</span>${l}</h3>`+(a.length?a.map(x=>`<div class="room"><div><b>${esc(x.name)}</b>${x.note?`<div class="mu">${esc(x.note)}</div>`:''}</div><div>${x.phone?`<a class="call" style="display:inline-flex;gap:5px;align-items:center" href="tel:${esc(tel(x.phone))}">${I('phone',14)}${esc(x.phone)}</a>`:''}</div></div>`).join(''):'<div class="mu" style="margin-top:6px">Nothing listed yet.</div>')+'</div>';
+  });
+  return h;
+}
+const dtl=(k,title,body)=>`<details class="dd" ${openP[k]?'open':''} ontoggle="openP['${k}']=this.open"><summary>${title}</summary><div>${body}</div></details>`;
+const AG={U10:'Under 10',U12:'Under 12'};
+const ages=()=>['U10','U12'].filter(a=>bAges[a]);
+const orgTeams=o=>teams.filter(x=>x.academy.toLowerCase()===String(o||'').trim().toLowerCase());
+const maxPl=(o,ag)=>orgTeams(o).filter(x=>ag.includes(x.age)).length*12;
+const paidOf=k=>pays.filter(p=>p.grp===k).reduce((s,p)=>s+(+p.amount||0),0);
+const grpTotal=l=>l.filter(live).reduce((s,b)=>s+(b.total||0),0);
+const payState=(k,l)=>{const t=grpTotal(l),p=paidOf(k);return p<=0?'unpaid':(t>0&&p>=t)?'paid':'partial'};
+const tname=x=>x.academy+(x.label?' '+x.label:'')+' · '+AG[x.age];
+const plLine=b=>(b.players?`<div class="mu" style="display:flex;gap:6px;align-items:center">${I('users',15)}${b.players} players · ${(b.ages||[]).map(a=>AG[a]).join(', ')}</div>`:'')+(b.arrive?`<div class="mu" style="display:flex;gap:6px;align-items:center">${I('clock',15)}Arrival ${esc(b.arrive)}</div>`:'');
+const payRows=(k,gt)=>{const pd=paidOf(k);return `<div class="top" style="padding:2px 0"><span class="mu">Paid</span><span>${money(pd)}</span></div><div class="top" style="padding:2px 0"><span class="mu">Balance</span><b>${money(Math.max(0,gt-pd))}</b></div>`};
+function allocBlock(g){const r=[];g.filter(live).forEach(b=>(b.slots||[]).forEach(s=>{if(s&&s.t){const t=teams.find(x=>x.id===s.t);r.push(`<div class="top" style="padding:3px 0"><span>${esc(t?tname(t):'Team')}</span><span class="mu">${esc(b.prop)} · ${esc(b.room)}${s.n?' · Room '+esc(s.n):''}</span></div>`)}}));return r.length?`<div style="margin-top:12px"><b>Room allocation</b>${r.join('')}</div>`:''}
+function edAge(a){const i=ed.ages.indexOf(a);i<0?ed.ages.push(a):ed.ages.splice(i,1);render()}
+function subNav(){return `<div class="fl" style="margin-top:0">${[['bookings','Bookings'],['alloc','Allocation'],['setup','Setup']].map(([k,l])=>`<span class="chip ${mt===k?'a':''}" onclick="mt='${k}';render()">${l}</span>`).join('')}<button class="b s x" style="margin-inline-start:auto" onclick="exportXlsx()">${I('download',14)}Export to Excel</button></div>`}
+function payBlock(k,tot){
+  const pd=paidOf(k),ps=pays.filter(p=>p.grp===k).sort((a,b)=>(a.at||'').localeCompare(b.at||'')),st=payState(k,G[k]);
+  return `<div class="top" style="padding:6px 0 0"><span class="mu">Paid ${money(pd)} · Balance ${money(Math.max(0,tot-pd))}</span><span class="pill ${st}">${st}</span></div>
+  <details ${openP['pay'+k]?'open':''} ontoggle="openP['pay'+k]=this.open"><summary>Payments</summary>
+  ${ps.map(p=>`<div class="top" style="padding:4px 0"><span class="mu">${esc((p.at||'').slice(0,10))} · ${esc(p.method||'')}${p.note?' · '+esc(p.note):''}</span><span>${money(p.amount)} <button class="b d x" onclick="ask('dy${p.id}',()=>delPay('${p.id}'))">${armed==='dy'+p.id?'Tap again':'Remove'}</button></span></div>`).join('')}
+  <div class="g2" style="margin-top:8px"><label>Amount (MVR)<input id="pa${k}" type="number" min="1" inputmode="numeric"></label><label>Method<select id="pm${k}"><option>Cash</option><option>Bank transfer</option><option>Other</option></select></label><label>Note (optional)<input id="pn${k}"></label></div>
+  <div class="acts"><button class="b x" onclick="addPay('${k}')">${I('plus',14)}Add payment</button><button class="b s x" onclick="rc='${k}';render()">${I('list',14)}Receipt</button></div></details>`}
+async function addPay(k){const a=+$('pa'+k).value;if(!(a>0))return say('Enter an amount');
+  try{await db.collection('payments').doc(uid()).set({grp:k,amount:a,method:$('pm'+k).value,note:$('pn'+k).value.trim(),at:new Date().toISOString()});say('Payment recorded')}catch(e){say('Could not save payment: '+(e.message||e.code))}}
+async function delPay(id){try{await db.collection('payments').doc(id).delete();say('Payment removed')}catch(e){say('Could not remove payment')}}
+function recData(k){const l=(G[k]||[]).filter(live);if(!l.length)return null;const b0=l[0],tot=grpTotal(l),pd=paidOf(k);return{ref:refOf(G[k]),b0,nn:nts(b0.in,b0.out),l,tot,pd,bal:Math.max(0,tot-pd),pl:pays.filter(p=>p.grp===k).sort((a,b)=>(a.at||'').localeCompare(b.at||''))}}
+function recText(k){const d=recData(k);if(!d)return'';return ['Milo Academy Championship - receipt','Reference: '+d.ref,'Academy / club: '+(d.b0.org||''),'Dates: '+fmt(d.b0.in)+' to '+fmt(d.b0.out)+' ('+d.nn+' nights)','Arrival time: '+(d.b0.arrive||'not given'),...d.l.map(b=>b.prop+' - '+b.room+' x '+(b.rooms||1)+' - '+(b.total?money(b.total):'rate TBC')),'Total: '+money(d.tot),...d.pl.map(p=>'Paid '+(p.at||'').slice(0,10)+' ('+(p.method||'')+'): '+money(p.amount)),'Paid in total: '+money(d.pd),'Balance: '+money(d.bal)].join('\n')}
+function recHtml(k){const d=recData(k);if(!d)return'';const r=(a,b)=>`<tr><td>${esc(a)}</td><td style="text-align:right">${esc(b)}</td></tr>`;return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt ${esc(d.ref)}</title><style>body{font:14px Arial,sans-serif;max-width:520px;margin:30px auto;color:#111}h1{font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin:14px 0}td{padding:6px 0;border-bottom:1px solid #ddd}.m{color:#666}</style></head><body><h1>Milo Academy Championship</h1><div class="m">Room booking receipt · Hanimaadhoo</div><p><b>Reference ${esc(d.ref)}</b><br>${esc(d.b0.org||'')}<br>${esc(d.b0.guest||'')} · ${esc(d.b0.phone||'')}<br>${esc(fmt(d.b0.in))} to ${esc(fmt(d.b0.out))} (${d.nn} nights)</p><table>${d.l.map(b=>r(b.prop+' - '+b.room+' x '+(b.rooms||1),b.total?money(b.total):'rate TBC')).join('')}${r('Total',money(d.tot))}${d.pl.map(p=>r('Paid '+(p.at||'').slice(0,10)+' ('+(p.method||'')+')',money(p.amount))).join('')}${r('Paid in total',money(d.pd))}${r('Balance',money(d.bal))}</table></body></html>`}
+async function dlReceipt(k){let d=null;try{d=await claude.use('downloads')}catch(e){}if(!d)return say('Downloads are not available here');const x=recData(k);try{await d.save({filename:'receipt-'+x.ref+'.html',data:recHtml(k)})}catch(e){say(e.code==='declined'?'Download cancelled':'Could not download')}}
+function rcModal(){
+  if(!rc)return'';const d=recData(rc);if(!d){rc=null;return''}
+  return `<div class="ov" onclick="if(event.target===this){rc=null;render()}"><div class="sheet">
+  <div class="top"><div><div class="mu sm">Ref ${esc(d.ref)}</div><h2>Receipt</h2></div><button class="b s x" aria-label="Close" onclick="rc=null;render()">${I('x',16)}</button></div>
+  <div class="mu" style="margin:8px 0">${esc(d.b0.org||'')} · ${fmt(d.b0.in)} → ${fmt(d.b0.out)} · ${d.nn} night${d.nn===1?'':'s'}</div>
+  ${d.l.map(b=>`<div class="top" style="padding:4px 0"><span>${esc(b.prop)} · ${esc(b.room)} × ${b.rooms||1}</span><span class="mu">${b.total?money(b.total):'TBC'}</span></div>`).join('')}
+  <div class="top" style="padding:8px 0;border-top:1px solid var(--bd);margin-top:6px"><b>Total</b><b>${money(d.tot)}</b></div>
+  ${d.pl.map(p=>`<div class="top mu" style="padding:2px 0"><span>${esc((p.at||'').slice(0,10))} · ${esc(p.method||'')}</span><span>${money(p.amount)}</span></div>`).join('')}
+  <div class="top" style="padding:6px 0"><span>Paid</span><b>${money(d.pd)}</b></div><div class="top" style="padding:2px 0"><span>Balance</span><b>${money(d.bal)}</b></div>
+  <div class="acts"><button class="b" onclick="copyText(recText('${rc}'),'Receipt copied')">${I('copy',14)}Copy</button><button class="b s" onclick="dlReceipt('${rc}')">${I('download',14)}Download</button><button class="b s" onclick="rc=null;render()">Close</button></div></div></div>`}
+function allocView(){
+  const by={};
+  Object.values(G).forEach(l=>{const lv=l.filter(live);if(!lv.length)return;const o=lv[0].org||'-',k=o.toLowerCase();(by[k]=by[k]||{org:o,lines:[]}).lines.push(...lv)});
+  teams.forEach(x=>{const k=x.academy.toLowerCase();by[k]=by[k]||{org:x.academy,lines:[]}});
+  const rows=Object.entries(by).map(([k,a])=>{const ts=orgTeams(a.org),n=ts.reduce((s,x)=>s+Math.ceil((+x.players||12)/ppr),0),hv=a.lines.reduce((s,b)=>s+(b.rooms||1),0);return{k,a,ts,n,hv}}).sort((x,y)=>x.a.org.localeCompare(y.a.org));
+  const need=rows.reduce((s,r)=>s+r.n,0),have=rows.reduce((s,r)=>s+r.hv,0);
+  let out=`<div class="stats"><div class="stat"><b>${need}</b><span>Rooms needed (est.)</span></div><div class="stat"><b>${have}</b><span>Rooms booked</span></div><div class="stat"><b style="color:${have>=need?'var(--ok)':'var(--bad)'}">${have>=need?'+':''}${have-need}</b><span>Balance</span></div><div class="stat"><b>${ppr}</b><span>Players per room</span></div></div><p class="mu" style="margin:0 0 12px">Estimate: players in each team divided by players per room, rounded up. Change the players per room under Setup.</p>`;
+  rows.forEach(({k,a,ts,n,hv})=>{
+    const ok=hv>=n;
+    const body=ts.map(x=>`<div class="top" style="padding:4px 0"><span>${esc(tname(x))}</span><span class="rate"><input type="number" min="1" value="${x.players||12}" onchange="setPl('${x.id}',this.value)"><span class="mu">players</span></span></div>`).join('')
+    +a.lines.map(b=>{const sl=b.slots||[];let r=`<div style="margin-top:12px"><b>${esc(b.prop)} · ${esc(b.room)}</b> <span class="mu">× ${b.rooms||1}</span></div>`;
+      for(let i=0;i<(b.rooms||1);i++){const s=sl[i]||{};r+=`<div class="g2" style="margin-top:6px"><label>Room ${i+1} · team<select onchange="setSlot('${b.id}',${i},'t',this.value)"><option value="">Unassigned</option>${ts.map(x=>`<option value="${x.id}" ${s.t===x.id?'selected':''}>${esc(tname(x))}</option>`).join('')}</select></label><label>Room number<input value="${esc(s.n||'')}" placeholder="e.g. 204" onchange="setSlot('${b.id}',${i},'n',this.value)"></label></div>`}return r}).join('')
+    +(a.lines.length?'':'<div class="mu" style="margin-top:8px">No rooms booked yet.</div>');
+    out+=dtl('al'+k.replace(/[^a-z0-9]/g,'_'),`${esc(a.org)} <span class="mu">· ${ts.length} team${ts.length===1?'':'s'} · ${hv}/${n} rooms</span><span class="pill ${ok?'confirmed':'cancelled'}">${ok?'OK':'Short '+(n-hv)}</span>`,body)});
+  if(!rows.length)out+=empty('users','No academies or bookings yet.');
+  return out}
+async function setPl(id,v){try{await db.collection('teams').doc(id).update({players:Math.max(1,+v||12)});say('Players updated')}catch(e){say('Could not update: '+(e.message||e.code))}}
+async function setSlot(bid,i,f,v){const b=books.find(x=>x.id===bid);if(!b)return;const s=[...(b.slots||[])];while(s.length<(b.rooms||1))s.push({t:'',n:''});s[i]={...s[i],[f]:v};try{await db.collection('bookings').doc(bid).update({slots:s});say('Saved')}catch(e){say('Could not save: '+(e.message||e.code))}}
+async function exportXlsx(){
+  let d=null;try{d=await claude.use('downloads')}catch(e){}
+  if(!d)return say('Downloads are not available here');
+  const sum=Object.entries(G).map(([k,l])=>{const b0=l[0],tot=grpTotal(l),pd=paidOf(k);return{Ref:refOf(l),'Academy / club':b0.org||'',Contact:b0.guest||'',Phone:b0.phone||'','Check-in':b0.in,'Check-out':b0.out,'Arrival time':b0.arrive||'',Rooms:l.filter(live).reduce((s,b)=>s+(b.rooms||1),0),Players:b0.players||'','Age groups':(b0.ages||[]).map(a=>AG[a]).join(', '),'Total (MVR)':tot,'Paid (MVR)':pd,'Balance (MVR)':Math.max(0,tot-pd),Status:[...new Set(l.map(b=>b.status))].join(', ')}});
+  const lines=books.map(b=>({Ref:refOf(G[b.grp||b.id]),'Academy / club':b.org||'',Property:b.prop,'Room type':b.room,Rooms:b.rooms||1,'Check-in':b.in,'Check-out':b.out,Nights:nts(b.in,b.out),'Total (MVR)':b.total||0,Status:b.status}));
+  const rooms=[];props.forEach(p=>(p.rooms||[]).forEach(r=>{const u=Math.min(qty(r),used(p.id,r.id));rooms.push({Property:p.name,'Room type':r.name,'Rate (MVR/night)':r.rate||0,'Total rooms':qty(r),['Booked '+ci+' to '+co]:u,Vacant:qty(r)-u})}));
+  const alloc=[];books.filter(live).forEach(b=>(b.slots||[]).forEach(s=>{if(s&&s.t){const t=teams.find(x=>x.id===s.t);alloc.push({Academy:b.org||'',Team:t?tname(t):'',Property:b.prop,'Room type':b.room,'Room number':s.n||'',Players:t?(t.players||12):''})}}));
+  const tm=teams.map(t=>({Academy:t.academy,Island:t.island,'Age group':AG[t.age],Label:t.label||'',Players:t.players||12,'Rooms needed (est.)':Math.ceil((t.players||12)/ppr)}));
+  const py=pays.map(p=>{const l=G[p.grp];return{Ref:l?refOf(l):'','Academy / club':l?l[0].org:'',Date:(p.at||'').slice(0,10),Method:p.method||'','Amount (MVR)':p.amount,Note:p.note||''}});
+  try{
+    if(window.XLSX){const wb=XLSX.utils.book_new();[['Bookings',sum],['Booking lines',lines],['Rooms',rooms],['Allocation',alloc],['Teams',tm],['Payments',py]].forEach(([n,r])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.length?r:[{}]),n));
+      await d.save({filename:'milo-academy-room-allocation.xlsx',data:XLSX.write(wb,{bookType:'xlsx',type:'array'})})}
+    else{const hd=Object.keys(sum[0]||{Ref:1}),csv=[hd.join(','),...sum.map(r=>hd.map(h=>'"'+String(r[h]==null?'':r[h]).replace(/"/g,'""')+'"').join(','))].join('\n');await d.save({filename:'bookings.csv',data:'\ufeff'+csv})}
+    say('Export ready')
+  }catch(e){say(e.code==='declined'?'Download cancelled':'Could not export: '+(e.message||e.code||''))}
+}
+const DV={
+"Book":"ބުކް ކުރައްވާ","My stay":"އަހަރެންގެ ބުކިންގ","Teams":"ޓީމްތައް","Info":"މައުލޫމާތު","Manage":"މެނޭޖްކުރޭ","Bookings":"ބުކިންގތައް","Allocation":"ކޮޓަރި ބެހުން","Setup":"ސެޓަޕް","Local info":"ސަރަހައްދީ މައުލޫމާތު",
+"Milo Academy Tournament Room Allocation":"މައިލޯ އެކަޑަމީ ޓޫރނަމަންޓް ކޮޓަރި ބެހުން","Hanimaadhoo · 11 – 13 Nov 2026":"ހަނިމާދޫ · 11 – 13 ނޮވެމްބަރު 2026","Event details":"ޓޫރނަމަންޓްގެ ތަފްސީލް","Hanimaadhoo Stadium":"ހަނިމާދޫ ސްޓޭޑިއަމް",
+"Under 10 · born on or after 2016":"10 އަހަރުން ދަށް · 2016 ގެ ފަހުން ލިބުނު","Under 12 · born on or after 2014":"12 އަހަރުން ދަށް · 2014 ގެ ފަހުން ލިބުނު","Max 12 players per team":"ޓީމަކަށް އެންމެ ގިނަވެގެން 12 ކުޅުންތެރިން",
+"Open for all academies · SVAM 7884788":"ހުރިހާ އެކަޑަމީތަކަށް ހުޅުވާލެވިފައި · SVAM 7884788","Main sponsor":"މެއިން ސްޕޮންސަރ","Organised by":"އިންތިޒާމްކުރީ",
+"Collaborating partners: Ministry of Youth Empowerment, Sports & Fitness · Football Association of Maldives · Secretariat of Hanimaadhoo Council":"ބައިވެރި ފަރާތްތައް: ޒުވާނުންގެ ބާރުވެރިކަމާއި ކުޅިވަރާއި ފިޓްނަސްގެ ވުޒާރާ · ފުޓްބޯޅަ އެސޯސިއޭޝަން އޮފް މޯލްޑިވްސް · ހަނިމާދޫ ކައުންސިލް ސެކްރެޓޭރިއެޓް",
+"Need help with rooms?":"ކޮޓަރިތަކާ ބެހޭގޮތުން އެހީއެއް ބޭނުންތޯ؟","Call":"ގުޅާ",
+"Find rooms":"ކޮޓަރި ހޯދާ","Tournament dates":"ޓޫރނަމަންޓްގެ ތާރީޚް","Check-in":"ޗެކް އިން","Check-out":"ޗެކް އައުޓް","Rooms needed":"ބޭނުންވާ ކޮޓަރި","Fewer rooms":"ކޮޓަރި މަދުކުރޭ","More rooms":"ކޮޓަރި އިތުރުކުރޭ",
+"Room availability":"ކޮޓަރި ލިބެން ހުރި ގޮތް","Available rooms":"ލިބެން ހުރި ކޮޓަރިތައް","Fully booked":"ފުރިފައި","Full":"ފުރިފައި","Booked":"ބުކްކޮށްފައި","Book now":"މިހާރު ބުކްކުރޭ","Choose valid dates":"ރަނގަޅު ތާރީޚެއް ހިޔާރުކުރައްވާ",
+"Rate TBC":"ރޭޓް ކަށަވަރުކުރެވެންޖެހޭ","Rate to be confirmed":"ރޭޓް ކަށަވަރުކުރެވެންޖެހޭ","TBC":"ކަށަވަރުކުރެވެންޖެހޭ","per room / night":"ކޮޓަރިއަކަށް / ރޭއަކަށް","Remove one":"އެއް ފުހެލާ","Add one":"އެއް އިތުރުކުރޭ",
+"Complete your booking":"ބުކިންގ ފުރިހަމަކުރައްވާ","Your booking":"ތިޔަބޭފުޅުންގެ ބުކިންގ","Academy / club":"އެކަޑަމީ / ކްލަބް","Contact person":"ގުޅޭނެ ފަރާތް","Phone / Viber":"ފޯނު / ވައިބަރ","Number of players":"ކުޅުންތެރިންގެ އަދަދު","Arrival time (on check-in day)":"ވަޑައިގަންނަ ވަގުތު (ޗެކް އިން ދުވަހު)","Age group":"އުމުރުފުރާ ގްރޫޕް",
+"Under 10":"10 އަހަރުން ދަށް","Under 12":"12 އަހަރުން ދަށް","Confirm booking":"ބުކިންގ ކަށަވަރުކުރޭ","Back":"ފަހަތަށް","Close":"ބަންދުކުރޭ","Cancel":"ކެންސަލްކުރޭ","Edit":"އެޑިޓް","View":"ބައްލަވާ",
+"Your request is held as pending until the organisers confirm it.":"ތިޔަބޭފުޅުންގެ ރިކުއެސްޓް އިންތިޒާމްކުރާ ފަރާތުން ކަށަވަރުކުރަންދެން ބެލެވެމުން ގެންދާނެއެވެ.","Please complete the highlighted fields.":"ފާހަގަކުރެވިފައިވާ ބައިތައް ފުރިހަމަކުރައްވާ.",
+"Could not connect. Please check your internet connection and reload the page.":"ކަނެކްޓްކުރެވެން ނެތް. އިންޓަނެޓް ބަލައި ސަފްޙާ އަލުން ލޯޑްކުރައްވާ.","No properties listed yet.":"އަދި ޕްރޮޕަރޓީއެއް ލިސްޓުކުރެވިފައެއް ނުވޭ.","Rooms coming soon.":"ކޮޓަރިތައް އަވަހަށް އިތުރުކުރެވޭނެ.","None":"ނެތް",
+"Total to pay":"ދައްކަންޖެހޭ ޖުމްލަ","Total":"ޖުމްލަ","Paid":"ދެއްކިފައި","Balance":"ބާކީ","Edit booking":"ބުކިންގ އެޑިޓްކުރޭ","Cancel booking":"ބުކިންގ ބާޠިލުކުރޭ","Copy details":"ތަފްސީލް ކޮޕީކުރޭ","Receipt":"ރަސީދު","Room allocation":"ކޮޓަރި ބެހުން",
+"Requested":"ރިކުއެސްޓްކުރެވިފައި","Confirmed":"ކަށަވަރުކުރެވިފައި","Cancelled":"ބާޠިލުކުރެވިފައި","Pending":"ބެލެވެމުންދަނީ","pending":"ބެލެވެމުންދަނީ","confirmed":"ކަށަވަރުކުރެވިފައި","cancelled":"ބާޠިލުކުރެވިފައި","paid":"ދެއްކިފައި","partial":"ބައެއް ދެއްކިފައި","unpaid":"ނުދައްކާ",
+"Find a booking with its reference":"ރެފަރެންސް ކޯޑުން ބުކިންގ ހޯދާ","Reference code":"ރެފަރެންސް ކޯޑު","Phone number":"ފޯނު ނަންބަރު","Phone used for booking":"ބުކްކުރުމަށް ބޭނުންކުރި ފޯނު","No bookings yet. Choose rooms in the Book tab to get started.":"އަދި ބުކިންގއެއް ނެތް. ފެށުމަށް ބުކް ޓެބުން ކޮޓަރިތައް ހިޔާރުކުރައްވާ.",
+"Turn on":"ޖަހާ","Get an alert when your booking is confirmed":"ބުކިންގ ކަށަވަރުކުރެވުމުން އިޝާރާތެއް ލިބެން ޖަހާ","Booking request sent":"ބުކިންގ ރިކުއެސްޓް ފޮނުވިއްޖެ","Reference":"ރެފަރެންސް",". You will see a notice here as soon as the organisers confirm your rooms.":". އިންތިޒާމްކުރާ ފަރާތުން ކޮޓަރިތައް ކަށަވަރުކުރެވުމުން މިތަނުގައި ނޮޓިސްއެއް ފެންނާނެއެވެ.",
+"The organisers have confirmed your rooms.":"އިންތިޒާމްކުރާ ފަރާތުން ތިޔަބޭފުޅުންގެ ކޮޓަރިތައް ކަށަވަރުކުރެއްވިއެވެ.","This booking was cancelled by the organisers.":"މި ބުކިންގ އިންތިޒާމްކުރާ ފަރާތުން ބާޠިލުކުރެއްވިއެވެ.",
+"Participating academies":"ބައިވެރިވާ އެކަޑަމީތައް","Teams entered in the championship, by academy and age group.":"ޗެމްޕިއަންޝިޕްގައި ބައިވެރިވާ ޓީމްތައް، އެކަޑަމީއާއި އުމުރުފުރާ ގްރޫޕްގެ ގޮތުން.","Academies":"އެކަޑަމީތައް","Under 10 teams":"10 އަހަރުން ދަށް ޓީމްތައް","Under 12 teams":"12 އަހަރުން ދަށް ޓީމްތައް","All teams":"ހުރިހާ ޓީމްތައް",
+"Search academy or island":"އެކަޑަމީ ނުވަތަ ރަށް ހޯދާ","No academies match your search.":"ހޯދުމާ ގުޅޭ އެކަޑަމީއެއް ނުފެނޭ.","No teams added yet.":"އަދި ޓީމެއް އިތުރުކުރެވިފައެއް ނުވޭ.","No academies or bookings yet.":"އަދި އެކަޑަމީއެއް ނުވަތަ ބުކިންގއެއް ނެތް.",
+"Taxis, restaurants and cafes on Hanimaadhoo. Tap a number to call.":"ހަނިމާދޫގެ ޓެކްސީ، ރެސްޓޯރެންޓް އަދި ކެފޭތައް. ގުޅުމަށް ނަންބަރެއް ފިއްތާލައްވާ.","Taxi":"ޓެކްސީ","Restaurants":"ރެސްޓޯރެންޓްތައް","Cafes":"ކެފޭތައް","Restaurant":"ރެސްޓޯރެންޓް","Cafe":"ކެފޭ","Nothing listed yet.":"އަދި އެއްޗެއް ލިސްޓުކުރެވިފައެއް ނުވޭ.",
+"Pending":"ބެލެވެމުންދަނީ","Rooms booked":"ބުކްކުރި ކޮޓަރި","Total value":"ޖުމްލަ އަގު","Total rooms":"ޖުމްލަ ކޮޓަރި","Search academy, contact, phone or property":"އެކަޑަމީ، ގުޅޭނެ ފަރާތް، ފޯނު ނުވަތަ ޕްރޮޕަރޓީ ހޯދާ","No bookings to show.":"ދައްކާލަން ބުކިންގއެއް ނެތް.","Restore":"އަލުން ގެނެސްދޭ","Tell the guest:":"މެހެމާނާއަށް އަންގާ:","Copy message":"މެސެޖު ކޮޕީކުރޭ","Copy":"ކޮޕީ","Download":"ޑައުންލޯޑް","Export to Excel":"އެކްސެލަށް އެކްސްޕޯޓްކުރޭ",
+"Payments":"ފައިސާ ދެއްކުން","Add payment":"ފައިސާ ދެއްކުން ރެކޯޑުކުރޭ","Amount (MVR)":"ޖުމްލަ (MVR)","Method":"ގޮތް","Cash":"ފައިސާ","Bank transfer":"ބޭންކް ޓްރާންސްފަރ","Other":"އެހެނިހެން","Note (optional)":"ނޯޓް (ބޭނުންނަމަ)","Remove":"ފުހެލާ","Tap again":"އަނެއްކާ ފިއްތާލައްވާ","Overbooked":"މާ ގިނައިން ބުކްކުރެވިފައި","Confirm (overbooked)":"ކަށަވަރުކުރޭ (މާ ގިނައިން ބުކްކުރެވިފައި)","Tap again to confirm anyway":"ކަށަވަރުކުރުމަށް އަނެއްކާ ފިއްތާލައްވާ","Another booking also covers some of your rooms. The organisers will contact you to sort it out.":"ތިޔަބޭފުޅުންގެ ބައެއް ކޮޓަރިތައް އެހެން ބުކިންގއެއްގައިވެސް ހިމެނިފައި. އިންތިޒާމްކުރާ ފަރާތުން ގުޅާނެއެވެ.","Tap again to cancel":"ކެންސަލްކުރުމަށް އަނެއްކާ ފިއްތާލައްވާ","Tap again to delete":"ފޮހެލުމަށް އަނެއްކާ ފިއްތާލައްވާ","Tap again to remove":"ފުހެލުމަށް އަނެއްކާ ފިއްތާލައްވާ",
+"Properties & rates":"ޕްރޮޕަރޓީތަކާއި ރޭޓްތައް","Add property":"ޕްރޮޕަރޓީ އިތުރުކުރޭ","Name":"ނަން","Type":"ބާވަތް","Phone":"ފޯނު","Location / description":"ތަން / ތަފްސީލް","Amenities (comma separated)":"ހިދުމަތްތައް (ކޮމާއިން ވަކިކުރައްވާ)","Guesthouse":"ގެސްޓްހައުސް","Hotel":"ހޮޓަލް","Homestay":"ހޯމްސްޓޭ","Apartment":"އަޕާޓްމަންޓް","Save amenities":"ހިދުމަތްތައް ސޭވްކުރޭ","Delete property":"ޕްރޮޕަރޓީ ފޮހެލާ",
+"Add room":"ކޮޓަރި އިތުރުކުރޭ","Room name":"ކޮޓަރީގެ ނަން","Rate (MVR/night)":"ރޭޓް (MVR/ރޭ)","Rate (MVR)":"ރޭޓް (MVR)","Number of rooms":"ކޮޓަރީގެ އަދަދު","Remove room":"ކޮޓަރި ފުހެލާ","Rooms":"ކޮޓަރިތައް","Teams & academies":"ޓީމްތަކާއި އެކަޑަމީތައް","Academy":"އެކަޑަމީ","Island":"ރަށް","Team label (optional)":"ޓީމް ލޭބަލް (ބޭނުންނަމަ)","Add team":"ޓީމް އިތުރުކުރޭ",
+"Focal point & settings":"ފޯކަލް ޕޮއިންޓާއި ސެޓިންގސް","Name and phone shown on the page":"ސަފްޙާގައި ދައްކާ ނަމާއި ފޯނު","Players per room (used to estimate rooms needed)":"ކޮޓަރިއެއްގައި ކުޅުންތެރިން (ބޭނުންވާ ކޮޓަރި އަންދާޒާކުރުމަށް)","Save":"ސޭވްކުރޭ","Local directory":"ސަރަހައްދީ ޑިރެކްޓްރީ","Notes (fares, hours, menu)":"ނޯޓް (ކުލި، ގަޑި، މެނޫ)","Add to directory":"ޑިރެކްޓްރީއަށް އިތުރުކުރޭ","Settings":"ސެޓިންގސް",
+"Estimate: players in each team divided by players per room, rounded up. Change the players per room under Setup.":"އަންދާޒާ: ކޮންމެ ޓީމެއްގެ ކުޅުންތެރިން ކޮޓަރިއެއްގައި ހުންނަ އަދަދަށް ބަހާލައި މައްޗަށް ރައުންޑްކުރެވިފައި. ކޮޓަރިއެއްގައި ހުންނަ އަދަދު ސެޓަޕްގައި ބަދަލުކުރެވިދާނެ.",
+"Rooms needed (est.)":"ބޭނުންވާ ކޮޓަރި (އަންދާޒާ)","Players per room":"ކޮޓަރިއެއްގައި ކުޅުންތެރިން","Unassigned":"ނުބެހި","Room number":"ކޮޓަރި ނަންބަރު","players":"ކުޅުންތެރިން","No rooms booked yet.":"އަދި ކޮޓަރިއެއް ބުކްކުރެވިފައެއް ނުވޭ.","OK":"ރަނގަޅު","Short":"މަދު",
+"Booking cancelled":"ބުކިންގ ބާޠިލުކުރެވިއްޖެ","Booking updated":"ބުކިންގ އަޕްޑޭޓްކުރެވިއްޖެ","Booking details copied":"ބުކިންގގެ ތަފްސީލް ކޮޕީކުރެވިއްޖެ","Message copied":"މެސެޖު ކޮޕީކުރެވިއްޖެ","Receipt copied":"ރަސީދު ކޮޕީކުރެވިއްޖެ","Saved":"ސޭވްކުރެވިއްޖެ","Settings saved":"ސެޓިންގސް ސޭވްކުރެވިއްޖެ","Amenities saved":"ހިދުމަތްތައް ސޭވްކުރެވިއްޖެ","Property added":"ޕްރޮޕަރޓީ އިތުރުކުރެވިއްޖެ","Property deleted":"ޕްރޮޕަރޓީ ފޮހެލެވިއްޖެ","Room added":"ކޮޓަރި އިތުރުކުރެވިއްޖެ","Rooms updated":"ކޮޓަރި އަޕްޑޭޓްކުރެވިއްޖެ","Rate updated":"ރޭޓް އަޕްޑޭޓްކުރެވިއްޖެ","Team added":"ޓީމް އިތުރުކުރެވިއްޖެ","Team removed":"ޓީމް ފުހެލެވިއްޖެ","Payment recorded":"ފައިސާ ދެއްކުން ރެކޯޑުކުރެވިއްޖެ","Payment removed":"ފައިސާ ދެއްކުން ފުހެލެވިއްޖެ","Players updated":"ކުޅުންތެރިންގެ އަދަދު އަޕްޑޭޓްކުރެވިއްޖެ","Export ready":"އެކްސްޕޯޓް ތައްޔާރު","Added to directory":"ޑިރެކްޓްރީއަށް އިތުރުކުރެވިއްޖެ","Alerts turned on":"އިޝާރާތްތައް ޖެހިއްޖެ","Download cancelled":"ޑައުންލޯޑް ކެންސަލްކުރެވިއްޖެ",
+"Alerts are blocked by your browser":"ބްރައުޒަރުން އިޝާރާތްތައް ހުއްޓުވާލައިފި","Alerts are not available here":"މިތަނުގައި އިޝާރާތްތައް ނުލިބެއެވެ","Downloads are not available here":"މިތަނުގައި ޑައުންލޯޑްތައް ނުލިބެއެވެ","Copy not available here":"މިތަނުގައި ކޮޕީކުރެވެން ނެތް","Booking confirmed. You can message the guest below.":"ބުކިންގ ކަށަވަރުކުރެވިއްޖެ. ތިރީގައިވާ ގޮތުން މެހެމާނާއަށް މެސެޖުކުރެވިދާނެ.",
+"Check-out must be after check-in.":"ޗެކް އައުޓް ޗެކް އިންގެ ފަހުން ވާންޖެހޭ.","Keep at least one room, or cancel the booking instead.":"މަދުވެގެން އެއް ކޮޓަރި ބާކީ ބަހައްޓާ، ނޫނީ ބުކިންގ ބާޠިލުކުރައްވާ.","Enter an amount":"ޖުމްލަ ޖަހާ","Enter a room name":"ކޮޓަރީގެ ނަން ޖަހާ","Enter a property name":"ޕްރޮޕަރޓީގެ ނަން ޖަހާ","Enter the academy name":"އެކަޑަމީގެ ނަން ޖަހާ","Enter a name":"ނަމެއް ޖަހާ",
+"Could not save booking:":"ބުކިންގ ސޭވްކުރެވެން ނެތް:","Could not update:":"އަޕްޑޭޓްކުރެވެން ނެތް:","Could not cancel:":"ކެންސަލްކުރެވެން ނެތް:","Could not save:":"ސޭވްކުރެވެން ނެތް:","Could not save payment:":"ފައިސާ ދެއްކުން ސޭވްކުރެވެން ނެތް:","Could not export:":"އެކްސްޕޯޓްކުރެވެން ނެތް:"
+};
+const RX=[
+[/^Arrival (\d{2}:\d{2})$/,m=>'ވަޑައިގަތުން '+m[1]],[/^(\d+) nights?$/,m=>m[1]+' ރޭ'],[/^(\d+) teams?$/,m=>m[1]+' ޓީމް'],[/^(\d+) rooms?$/,m=>m[1]+' ކޮޓަރި'],[/^(\d+) players$/,m=>m[1]+' ކުޅުންތެރިން'],
+[/^(\d+) left$/,m=>m[1]+' ބާކީ'],[/^Only (\d+) left$/,m=>'ބާކީ ހުރީ '+m[1]+' ކޮޓަރި'],[/^(\d+) available$/,m=>m[1]+' ލިބެން ހުރި'],[/^(\d+) of (\d+) available$/,m=>m[2]+' ގެ ތެރެއިން '+m[1]+' ލިބެން ހުރި'],
+[/^(\d+) of (\d+) vacant$/,m=>m[2]+' ގެ ތެރެއިން '+m[1]+' ހުސް'],[/^(\d+) total · (\d+) booked · (\d+) vacant for these dates$/,m=>'ޖުމްލަ '+m[1]+' · ބުކްކުރި '+m[2]+' · ހުސް '+m[3]+' (މި ތާރީޚްތަކަށް)'],
+[/^(\d+) of (\d+) rooms? selected$/,m=>m[2]+' ގެ ތެރެއިން '+m[1]+' ކޮޓަރި ހިޔާރުކުރެވިފައި'],[/^MVR ([\d,]+) total$/,m=>'ޖުމްލަ MVR '+m[1]],[/^MVR ([\d,]+) for (\d+)$/,m=>m[2]+' ކޮޓަރިއަށް MVR '+m[1]],
+[/^from MVR ([\d,]+)$/,m=>'MVR '+m[1]+' އިން ފެށިގެން'],[/^MVR ([\d,]+) per room \/ night × (\d+)$/,m=>'MVR '+m[1]+' ކޮޓަރިއަކަށް / ރޭއަކަށް × '+m[2]],
+[/^Booked rooms \((\d+)\)$/,m=>'ބުކްކުރި ކޮޓަރިތައް ('+m[1]+')'],[/^Vacant rooms \((\d+)\)$/,m=>'ހުސް ކޮޓަރިތައް ('+m[1]+')'],[/^Ref (\S+)$/,m=>'ރެފް '+m[1]],
+[/^Booking (\S+) (confirmed|cancelled)$/,m=>'ބުކިންގ '+m[1]+' '+DV[m[2]]],[/^Booked by (.+) · (.+)$/,m=>'ބުކްކުރީ '+m[1]+' · '+m[2]],[/^Room (\d+) · team$/,m=>'ކޮޓަރި '+m[1]+' · ޓީމް'],
+[/^Short (\d+)$/,m=>m[1]+' މަދު'],[/^(All|Pending|Confirmed|Cancelled) (\d+)$/,m=>({All:'ހުރިހާ',Pending:'ބެލެވެމުންދަނީ',Confirmed:'ކަށަވަރުކުރެވިފައި',Cancelled:'ބާޠިލުކުރެވިފައި'})[m[1]]+' '+m[2]],
+[/^Paid (MVR [\d,]+) · Balance (MVR [\d,]+)$/,m=>'ދެއްކިފައި '+m[1]+' · ބާކީ '+m[2]],[/^Call (.+)$/,m=>m[1]+' އަށް ގުޅާ'],[/^Hello (.+)$/,m=>'ސަލާމް '+m[1]]
+];
+function tr(s){
+  if(DV[s])return DV[s];
+  for(const[r,f]of RX){const m=s.match(r);if(m)return f(m)}
+  const i=s.indexOf(': ');if(i>0){const l=s.slice(0,i+1);if(DV[l])return DV[l]+' '+s.slice(i+2)}
+  if(s.includes(' · ')){const p=s.split(' · '),q=p.map(tr);if(q.some((x,j)=>x!==p[j]))return q.join(' · ')}
+  return s;
+}
+const L=s=>lang==='dv'?tr(s):s;
+const MD=['ޖަނަވަރީ','ފެބްރުއަރީ','މާރިޗު','އޭޕްރީލް','މޭ','ޖޫން','ޖުލައި','އޮގަސްޓު','ސެޕްޓެމްބަރު','އޮކްޓޫބަރު','ނޮވެމްބަރު','ޑިސެމްބަރު'],WD=['އާދިއްތަ','ހޯމަ','އަންގާރަ','ބުދަ','ބުރާސްފަތި','ހުކުރު','ހޮނިހިރު'];
+const trKeep=o=>{const x=o.trim();if(!x)return o;const r=tr(x);return r===x?o:o.replace(x,r)};
+let dvOn=false;
+function localize(){
+  if(lang==='en'&&!dvOn)return;if(lang==='dv')dvOn=true;
+  try{
+    const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),ns=[];while(w.nextNode())ns.push(w.currentNode);
+    ns.forEach(n=>{const p=n.parentElement;if(!p||p.closest('[data-nt],script,style'))return;if(n._o==null)n._o=n.nodeValue;const v=lang==='dv'?trKeep(n._o):n._o;if(n.nodeValue!==v)n.nodeValue=v});
+    document.querySelectorAll('[placeholder],[aria-label]').forEach(e=>['placeholder','aria-label'].forEach(a=>{if(e.hasAttribute(a)){const k='_o'+a;if(e[k]==null)e[k]=e.getAttribute(a);const v=lang==='dv'?tr(e[k]):e[k];if(e.getAttribute(a)!==v)e.setAttribute(a,v)}}));
+  }catch(e){}
+}
+function applyLang(){const h=document.documentElement;h.lang=lang==='dv'?'dv':'en';h.dir=lang==='dv'?'rtl':'ltr';const b=$('lg');if(b)b.textContent=lang==='dv'?'English':'ދިވެހި';localize()}
+function setLang(){lang=lang==='dv'?'en':'dv';try{localStorage.setItem('mil_lang',lang)}catch(e){}render()}
+function conflicts(){
+  const m={};
+  props.forEach(p=>(p.rooms||[]).forEach(r=>{
+    const ls=books.filter(b=>b.pid===p.id&&b.rid===r.id&&live(b));
+    ls.forEach(x=>{
+      const act=ls.filter(y=>y.in<=x.in&&x.in<y.out),u=act.reduce((s,y)=>s+(y.rooms||1),0);
+      if(u>qty(r))act.forEach(y=>{const k=y.grp||y.id,msg=p.name+' · '+r.name+': '+u+' booked, only '+qty(r)+' available on '+fmt(x.in);(m[k]=m[k]||[]);if(!m[k].includes(msg))m[k].push(msg)});
+    });
+  }));
+  return m;
+}
+const cfBanner=()=>{const n=Object.keys(CF).length;return n?`<div class="help" style="background:#fdf3f2;color:var(--bad);margin:0 0 12px;align-items:flex-start"><span style="display:flex;gap:8px">${I('bell',16)}<span><b>${n} booking${n>1?'s':''} overbooked.</b> Two or more bookings take the same room on the same night. Look for the red notice on the booking${n>1?'s':''} below.</span></span></div>`:''};
+const cfNote=k=>CF[k]?`<div class="help" style="background:#fdf3f2;color:var(--bad);margin:8px 0;align-items:flex-start"><span><b>Overbooked</b>${CF[k].map(x=>`<div class="sm">${esc(x)}</div>`).join('')}</span></div>`:'';
+const acl=()=>`<datalist id="acl">${[...new Set(teams.map(x=>x.academy))].sort().map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
+const tmInfo=o=>{const l=teams.filter(x=>x.academy.toLowerCase()===String(o||'').trim().toLowerCase());if(!l.length)return'';const a=l.filter(x=>x.age==='U10').length,b=l.length-a;return `<div class="chips" style="margin:6px 0 0"><span class="chip a">${l.length} team${l.length>1?'s':''}</span>${a?`<span class="chip">U10 × ${a}</span>`:''}${b?`<span class="chip">U12 × ${b}</span>`:''}</div>`};
+function teamsView(){
+  const by={};teams.forEach(x=>{(by[x.academy]=by[x.academy]||{academy:x.academy,island:x.island,list:[]}).list.push(x)});
+  const all=Object.values(by),n10=teams.filter(x=>x.age==='U10').length,n12=teams.filter(x=>x.age==='U12').length,qq=tq.toLowerCase();
+  let h=`<div style="margin-bottom:12px"><h2>Participating academies</h2><div class="mu">Teams entered in the championship, by academy and age group.</div></div>
+  <div class="stats"><div class="stat"><b>${all.length}</b><span>Academies</span></div><div class="stat"><b>${teams.length}</b><span>Teams</span></div><div class="stat"><b>${n10}</b><span>Under 10 teams</span></div><div class="stat"><b>${n12}</b><span>Under 12 teams</span></div></div>
+  <div class="fl">${['all','U10','U12'].map(a=>`<span class="chip ${tf===a?'a':''}" onclick="tf='${a}';render()">${a==='all'?'All teams':a==='U10'?'Under 10':'Under 12'}</span>`).join('')}</div>
+  <label style="margin-bottom:12px"><input id="tq" placeholder="Search academy or island" value="${esc(tq)}" onchange="tq=this.value;render()"></label>`;
+  if(!loaded)return h+'<div class="sk"></div><div class="sk"></div>';
+  if(!teams.length)return h+empty('users','No teams added yet.'+(admin?' Add them in the Manage tab.':''));
+  const arr=all.filter(a=>(tf==='all'||a.list.some(x=>x.age===tf))&&(!qq||(a.academy+' '+a.island).toLowerCase().includes(qq))).sort((x,y)=>x.academy.localeCompare(y.academy));
+  arr.forEach(a=>{
+    const c10=a.list.filter(x=>x.age==='U10').length,c12=a.list.length-c10,shown=a.list.filter(x=>tf==='all'||x.age===tf).sort((x,y)=>x.age.localeCompare(y.age)||(x.label||'').localeCompare(y.label||''));
+    h+=`<div class="card"><div class="ph"><div class="av">${I('users',20)}</div><div style="flex:1;min-width:0"><h3>${esc(a.academy)}</h3><div class="mu" style="display:flex;gap:5px;align-items:center">${I('pin',13)}${esc(a.island)}</div></div><div style="text-align:end"><div style="font-weight:700;font-size:18px">${a.list.length}</div><div class="mu sm">team${a.list.length>1?'s':''}</div></div></div>
+    <div class="chips">${c10?`<span class="chip a">Under 10 × ${c10}</span>`:''}${c12?`<span class="chip a">Under 12 × ${c12}</span>`:''}</div>
+    <div style="margin-top:8px">${shown.map(x=>`<div class="top" style="padding:7px 0;border-top:1px solid var(--bd)"><span>${esc(x.academy)}${x.label?' '+esc(x.label):''}</span><span class="age">${esc(x.age)}</span></div>`).join('')}</div></div>`;
+  });
+  if(!arr.length)h+=empty('users','No academies match your search.');
+  return h;
+}
+async function addTeam(){const academy=$('ta').value.trim(),island=$('ti').value.trim();if(!academy)return say('Enter the academy name');
+  await db.collection('teams').doc(uid()).set({academy,island,age:$('tg').value,label:$('tl').value.trim()});$('tl').value='';say('Team added')}
+async function delTeam(id){await db.collection('teams').doc(id).delete();say('Team removed')}
+function manageView(){
+  const act=books.filter(live),pend=books.filter(b=>b.status==='pending').length,conf=books.filter(b=>b.status==='confirmed').length,rev=act.reduce((s,b)=>s+(b.total||0),0),nr=act.reduce((s,b)=>s+(b.rooms||1),0);
+  let h=`<div class="stats"><div class="stat"><b style="color:var(--wn)">${pend}</b><span>Pending</span></div><div class="stat"><b style="color:var(--ok)">${conf}</b><span>Confirmed</span></div><div class="stat"><b>${nr}</b><span>Rooms booked</span></div><div class="stat"><b>${money(rev)}</b><span>Total value</span></div></div>`;
+  const head=h+cfBanner();h='';
+  const cnt=s=>s==='all'?books.length:books.filter(b=>b.status===s).length;
+  h+=`<div class="top"><h2>Bookings</h2></div><div class="fl">${['all','pending','confirmed','cancelled'].map(s=>`<span class="chip ${filt===s?'a':''}" onclick="filt='${s}';render()">${s[0].toUpperCase()+s.slice(1)} ${cnt(s)}</span>`).join('')}</div>
+  <label style="margin-bottom:12px"><input id="qs" placeholder="Search academy, contact, phone or property" value="${esc(qtxt)}" onchange="qtxt=this.value;render()"></label>`;
+  const qq=qtxt.toLowerCase();
+  const gl=Object.entries(G).filter(([k,l])=>(filt==='all'||l.some(b=>b.status===filt))&&(!qq||l.map(b=>[b.org,b.guest,b.phone,b.prop,b.room].join(' ')).join(' ').toLowerCase().includes(qq))).sort((a,b)=>(b[1][0].at||'').localeCompare(a[1][0].at||''));
+  gl.forEach(([k,l])=>{
+    const b0=l[0],lv=l.filter(live),tot=lv.reduce((s,b)=>s+(b.total||0),0),sts=[...new Set(l.map(b=>b.status))],mm=encodeURIComponent(confMsg(k)),ph=intl(b0.phone);
+    h+=`<div class="card"><div class="top"><div><div class="mu sm">Ref ${esc(refOf(l))}</div><b>${esc(b0.org||'—')}</b></div><span>${sts.map(pill).join(' ')}</span></div>
+    <div class="mu">${esc(b0.guest)} · <a class="call" style="font-weight:500" href="tel:${esc(tel(b0.phone))}">${esc(b0.phone)}</a></div>
+    <div class="mu" style="margin:6px 0;display:flex;gap:6px;align-items:center">${I('cal',15)}${fmt(b0.in)} → ${fmt(b0.out)}</div>${plLine(b0)}${tmInfo(b0.org)}${cfNote(k)}`
+    +l.map(b=>`<div class="top" style="padding:4px 0${live(b)?'':';opacity:.5'}"><span>${esc(b.prop)} · ${esc(b.room)} × ${b.rooms||1}</span><span class="mu">${b.total?money(b.total):'TBC'}</span></div>`).join('')
+    +`<div class="top" style="padding:8px 0 0;margin-top:4px;border-top:1px solid var(--bd)"><b>Total</b><b>${money(tot)}</b></div>${live(b0)||lv.length?payBlock(k,tot):''}
+    <div class="acts">${l.some(b=>b.status==='pending')?`<button class="b x" onclick="${CF[k]?`ask('cf${k}',()=>setG('${k}','confirmed'))`:`setG('${k}','confirmed')`}">${I('check',14)}${CF[k]?(armed==='cf'+k?'Tap again to confirm anyway':'Confirm (overbooked)'):'Confirm booking'}</button>`:''}${lv.length?`<button class="b s x" onclick="editG('${k}')">${I('edit',14)}Edit</button><button class="b d x" onclick="ask('cg${k}',()=>cancelG('${k}'))">${armed==='cg'+k?'Tap again to cancel':'Cancel booking'}</button>`:`<button class="b s x" onclick="setG('${k}','pending')">Restore</button>`}</div>
+    ${l.some(b=>b.status==='confirmed')?`<div class="acts"><span class="mu sm">Tell the guest:</span><a class="b s x" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${mm}">${I('send',14)}WhatsApp</a><a class="b s x" href="sms:+${ph}?&body=${mm}">${I('send',14)}SMS</a><button class="b s x" onclick="copyMsg('${k}')">${I('copy',14)}Copy message</button></div>`:''}</div>`});
+  if(!gl.length)h+=empty('list','No bookings to show.');
+  const hb=h;h='';
+  h+=`<div style="margin:22px 0 10px"><h2>Properties &amp; rates</h2></div>`;
+  h+=dtl('add',`${I('plus',16)} Add property`,`<div class="g2"><label>Name<input id="pn"></label><label>Type<select id="pt"><option>Guesthouse</option><option>Hotel</option><option>Homestay</option><option>Apartment</option></select></label><label>Phone<input id="pp" type="tel"></label><label>Location / description<input id="pd"></label><label>Amenities (comma separated)<input id="pa" placeholder="WiFi, Air conditioning, Breakfast"></label></div><div class="acts"><button class="b" onclick="addProp()">Add property</button></div>`);
+  props.forEach(p=>{
+    let b=`<label>Amenities (comma separated)<input id="am${p.id}" value="${esc((p.amenities||[]).join(', '))}" placeholder="WiFi, Air conditioning, Breakfast"></label><div class="acts" style="margin-top:8px"><button class="b s x" onclick="saveAm('${p.id}')">Save amenities</button><button class="b d x" onclick="ask('dp${p.id}',()=>delProp('${p.id}'))">${armed==='dp'+p.id?'Tap again to delete':'Delete property'}</button></div>`;
+    (p.rooms||[]).forEach(r=>{b+=`<div class="room"><div><b>${esc(r.name)}</b></div><div class="rate"><label>Rate (MVR)<input type="number" min="0" inputmode="numeric" value="${r.rate}" onchange="setRate('${p.id}','${r.id}',this.value)"></label><label>Rooms<input type="number" min="1" inputmode="numeric" value="${qty(r)}" onchange="setQty('${p.id}','${r.id}',this.value)"></label></div><div class="act"><span></span><button class="b d x" onclick="delRoom('${p.id}','${r.id}')">Remove room</button></div></div>`});
+    b+=`<div class="g2" style="margin-top:12px"><label>Room name<input id="rn${p.id}"></label><label>Rate (MVR/night)<input type="number" min="0" inputmode="numeric" id="rr${p.id}"></label><label>Number of rooms<input type="number" min="1" inputmode="numeric" value="1" id="rc${p.id}"></label></div><div class="acts"><button class="b s" onclick="addRoom('${p.id}')">Add room</button></div>`;
+    h+=dtl('p'+p.id,`${esc(p.name)} <span class="mu">· ${(p.rooms||[]).reduce((s,r)=>s+qty(r),0)} rooms</span>`,b);
+  });
+  h+=`<div style="margin:22px 0 10px"><h2>Settings</h2></div>`;
+  h+=dtl('tm',`Teams &amp; academies <span class="mu">· ${teams.length} teams</span>`,`<div class="g2"><label>Academy<input id="ta" list="acl" placeholder="Academy name"></label><label>Island<input id="ti" placeholder="e.g. Ha. Kelaa"></label><label>Age group<select id="tg"><option>U10</option><option>U12</option></select></label><label>Team label (optional)<input id="tl" placeholder="A, B..."></label></div><div class="acts"><button class="b" onclick="addTeam()">${I('plus',16)}Add team</button></div>`+[...teams].sort((x,y)=>x.academy.localeCompare(y.academy)||x.age.localeCompare(y.age)).map(x=>`<div class="room"><div><b>${esc(x.academy)}${x.label?' '+esc(x.label):''}</b><div class="mu">${esc(x.age)} · ${esc(x.island||'')}</div></div><div class="act"><span></span><button class="b d x" onclick="ask('dt${x.id}',()=>delTeam('${x.id}'))">${armed==='dt'+x.id?'Tap again to remove':'Remove'}</button></div></div>`).join(''));
+  h+=dtl('foc','Focal point &amp; settings',`<label>Name and phone shown on the page<input id="fp" value="${esc(focal)}"></label><label style="margin-top:10px">Players per room (used to estimate rooms needed)<input id="pp2" type="number" min="1" inputmode="numeric" value="${ppr}"></label><div class="acts"><button class="b" onclick="saveFocal()">Save</button></div>`);
+  h+=dtl('dir','Local directory',`<div class="g2"><label>Type<select id="dt"><option>Taxi</option><option>Restaurant</option><option>Cafe</option></select></label><label>Name<input id="dn"></label><label>Phone<input id="dp" type="tel"></label><label>Notes (fares, hours, menu)<input id="dd"></label></div><div class="acts"><button class="b" onclick="addDir()">Add to directory</button></div>`+dir.map(x=>`<div class="room"><div><b>${esc(x.name)}</b><div class="mu">${esc(x.type)} · ${esc(x.phone||'')}</div></div><div class="act"><span></span><button class="b d x" onclick="delDir('${x.id}')">Remove</button></div></div>`).join(''));
+  return head+subNav()+(mt==='alloc'?allocView():mt==='setup'?h:hb);
+}
+async function saveFocal(){await db.doc('settings/main').set({focal:$('fp').value.trim(),ppr:Math.max(1,+$('pp2').value||4)});say('Settings saved')}
+async function addProp(){
+  const name=$('pn').value.trim();if(!name)return say('Enter a property name');
+  await db.collection('properties').doc(uid()).set({name,type:$('pt').value,phone:$('pp').value.trim(),desc:$('pd').value.trim(),amenities:cs($('pa').value),rooms:[]});say('Property added');
+}
+async function saveAm(id){await db.collection('properties').doc(id).update({amenities:cs($('am'+id).value)});say('Amenities saved')}
+async function addDir(){const name=$('dn').value.trim();if(!name)return say('Enter a name');await db.collection('directory').doc(uid()).set({type:$('dt').value,name,phone:$('dp').value.trim(),note:$('dd').value.trim()});$('dn').value='';$('dp').value='';$('dd').value='';say('Added to directory')}
+async function delDir(id){await db.collection('directory').doc(id).delete()}
+async function delProp(id){await db.collection('properties').doc(id).delete();say('Property deleted')}
+async function addRoom(pid){
+  const name=$('rn'+pid).value.trim(),rate=+$('rr'+pid).value,qty=+$('rc'+pid).value||1;if(!name)return say('Enter a room name');
+  const p=props.find(x=>x.id===pid);
+  await db.collection('properties').doc(pid).update({rooms:[...(p.rooms||[]),{id:uid(),name,rate:rate||0,qty}]});
+  $('rn'+pid).value='';$('rr'+pid).value='';say('Room added');
+}
+async function setRate(pid,rid,v){const p=props.find(x=>x.id===pid);await db.collection('properties').doc(pid).update({rooms:p.rooms.map(r=>r.id===rid?{...r,rate:+v||0}:r)});say('Rate updated')}
+async function setQty(pid,rid,v){const p=props.find(x=>x.id===pid);await db.collection('properties').doc(pid).update({rooms:p.rooms.map(r=>r.id===rid?{...r,qty:Math.max(1,+v||1)}:r)});say('Rooms updated')}
+async function delRoom(pid,rid){const p=props.find(x=>x.id===pid);await db.collection('properties').doc(pid).update({rooms:p.rooms.filter(r=>r.id!==rid)})}
+async function setG(k,status){
+  if(!admin)return say('Only the admin can do this');
+  const l=(G[k]||[]).filter(b=>status==='confirmed'?b.status==='pending':status==='pending'?b.status==='cancelled':live(b));
+  try{for(const b of l)await db.collection('bookings').doc(b.id).update({status,upd:new Date().toISOString()});say(status==='confirmed'?'Booking confirmed. You can message the guest below.':'Booking '+status)}catch(e){say('Could not update: '+(e.message||e.code))}
+}
+async function cancelG(k){
+  const l=(G[k]||[]).filter(live);
+  try{for(const b of l){await db.collection('bookings').doc(b.id).update({status:'cancelled',upd:new Date().toISOString()});seen[b.id]='cancelled'}saveSeen();ed=null;say('Booking cancelled')}catch(e){say('Could not cancel: '+(e.message||e.code))}
+  render();
+}
+function confMsg(k){const l=(G[k]||[]).filter(live),b0=l[0];if(!b0)return'';const tot=l.reduce((s,b)=>s+(b.total||0),0);
+  return 'Hello '+b0.guest+', your room booking (Ref '+refOf(G[k])+') for '+b0.org+' at the Milo Academy Championship, Hanimaadhoo is confirmed.\n'+fmt(b0.in)+' to '+fmt(b0.out)+(b0.arrive?'\nArrival time: '+b0.arrive:'')+'\n'+l.map(b=>b.prop+' - '+b.room+' x '+(b.rooms||1)).join('\n')+'\nTotal: '+money(tot)+(focal?'\nQuestions: '+focal:'')}
+function copyMsg(k){copyText(confMsg(k),'Message copied')}
+const usedEx=(pid,rid,a,b,ex)=>books.filter(x=>x.pid===pid&&x.rid===rid&&live(x)&&!ex.includes(x.id)&&a<x.out&&b>x.in).reduce((s,x)=>s+(x.rooms||1),0);
+function maxFor(b,ex){const p=props.find(x=>x.id===b.pid),r=p&&(p.rooms||[]).find(x=>x.id===b.rid);return r?qty(r)-usedEx(b.pid,b.rid,ed.ci,ed.co,ex):(b.rooms||1)}
+function editG(k){
+  const g=(G[k]||[]).filter(live);if(!g.length)return;const b0=g[0];
+  ed={k,ci:b0.in,co:b0.out,lines:Object.fromEntries(g.map(b=>[b.id,b.rooms||1])),org:b0.org||'',gn:b0.guest||'',gp:b0.phone||'',ages:[...(b0.ages||[])],pl:b0.players||'',at:b0.arrive||''};
+  showForm=false;errs={};fmsg='';render();
+}
+function edN(id,d){const b=books.find(x=>x.id===id),ex=(G[ed.k]||[]).map(x=>x.id);ed.lines[id]=Math.max(0,Math.min(maxFor(b,ex),(ed.lines[id]||0)+d));render()}
+function editModal(){
+  if(!ed)return'';
+  const g=(G[ed.k]||[]).filter(live);if(!g.length){ed=null;return''}
+  const nn=nts(ed.ci,ed.co),ex=g.map(x=>x.id);
+  const rows=g.map(b=>{const mx=Math.max(0,maxFor(b,ex)),c=ed.lines[b.id]||0;
+    return `<div class="room"><div><b>${esc(b.prop)}</b><div>${esc(b.room)}</div><div class="mu sm">${mx} available for these dates</div></div><div class="stp"><button class="b s" ${c?'':'disabled'} aria-label="Remove one" onclick="edN('${b.id}',-1)">${I('minus',16)}</button><b>${c}</b><button class="b s" ${c<mx?'':'disabled'} aria-label="Add one" onclick="edN('${b.id}',1)">${I('plus',16)}</button></div></div>`}).join('');
+  return `<div class="ov" onclick="if(event.target===this){ed=null;fmsg='';render()}"><div class="sheet">
+  <div class="top"><div><div class="mu sm">Ref ${esc(refOf(g))}</div><h2>Edit booking</h2></div><button class="b s x" aria-label="Close" onclick="ed=null;fmsg='';render()">${I('x',16)}</button></div>
+  ${fmsg?`<div class="help" style="background:#fdf3f2;color:var(--bad)">${esc(fmsg)}</div>`:''}
+  <div class="g3" style="margin-top:12px"><label>Check-in<input type="date" id="eci" value="${ed.ci}" onchange="ed.ci=this.value;if(ed.co<=ed.ci)ed.co=addDays(ed.ci,1);render()"></label><label>Check-out<input type="date" id="eco" min="${addDays(ed.ci,1)}" value="${ed.co}" onchange="ed.co=this.value;render()"></label></div>
+  <p class="mu" style="margin:8px 0 0"><span class="nb">${nn} night${nn===1?'':'s'}</span></p>
+  <div style="margin-top:6px">${rows}</div>
+  <div class="g2" style="margin-top:12px"><label>Academy / club<input id="eo" list="acl" class="${errs.eo?'err':''}" value="${esc(ed.org)}"></label><label>Contact person<input id="en" class="${errs.en?'err':''}" value="${esc(ed.gn)}"></label><label>Phone / Viber<input id="ep" type="tel" inputmode="tel" class="${errs.ep?'err':''}" value="${esc(ed.gp)}"></label><label>Number of players<input id="epl" type="number" min="1" inputmode="numeric" value="${esc(ed.pl)}" class="${errs.epl?'err':''}"></label><label>Arrival time (on check-in day)<input id="eat" type="time" value="${esc(ed.at)}" class="${errs.eat?'err':''}"></label></div>
+  <div style="margin-top:10px"><div class="mu" style="margin-bottom:6px">Age group</div><div class="fl" style="margin:0">${['U10','U12'].map(a=>`<span class="chip ${ed.ages.includes(a)?'a':''}" style="${errs.ea?'border-color:var(--bad)':''}" onclick="edAge('${a}')">${a==='U10'?'Under 10':'Under 12'}</span>`).join('')}</div></div>
+  <p class="mu sm" style="margin:12px 0 0">Changing the dates or rooms of a confirmed booking sends it back to pending until the organisers confirm it again. Set a room to 0 to drop it. To add a different room type, make a new booking.</p>
+  <div class="acts"><button class="b" onclick="saveEdit()">${I('check',16)}Save changes</button><button class="b s" onclick="ed=null;fmsg='';render()">Close</button></div></div></div>`;
+}
+async function saveEdit(){
+  const org=$('eo').value.trim(),name=$('en').value.trim(),phone=$('ep').value.trim(),pl=+$('epl').value||0,at=$('eat').value;
+  ed.org=org;ed.gn=name;ed.gp=phone;ed.pl=pl;ed.at=at;
+  errs={eo:!org,en:!name,ep:phone.replace(/\D/g,'').length<7,epl:pl<1,ea:!ed.ages.length,eat:!at};
+  if(errs.eo||errs.en||errs.ep||errs.epl||errs.ea||errs.eat){fmsg='Please complete the highlighted fields.';return render()}
+  if(ed.co<=ed.ci){fmsg='Check-out must be after check-in.';return render()}
+  const mp=maxPl(org,ed.ages);if(mp&&pl>mp){errs.epl=true;fmsg='The maximum is '+mp+' players for this academy in the age groups chosen (12 per team).';return render()}
+  const g=(G[ed.k]||[]).filter(live),ex=g.map(x=>x.id),nn=nts(ed.ci,ed.co);
+  if(!g.some(b=>ed.lines[b.id]>0)){fmsg='Keep at least one room, or cancel the booking instead.';return render()}
+  for(const b of g){const c=ed.lines[b.id];if(c>0&&c>maxFor(b,ex)){fmsg='Not enough '+b.room+' rooms at '+b.prop+' for those dates.';return render()}}
+  let reconf=false;
+  try{
+    for(const b of g){
+      const c=ed.lines[b.id],ro=b.rooms||1,on=nts(b.in,b.out),now=new Date().toISOString();
+      if(c===0){await db.collection('bookings').doc(b.id).update({status:'cancelled',upd:now});seen[b.id]='cancelled';continue}
+      const p=props.find(x=>x.id===b.pid),r=p&&(p.rooms||[]).find(x=>x.id===b.rid),unit=b.total&&ro&&on?b.total/(ro*on):(r?r.rate:0);
+      const ch=c!==ro||ed.ci!==b.in||ed.co!==b.out,back=ch&&b.status==='confirmed';if(back){reconf=true;seen[b.id]='pending'}
+      await db.collection('bookings').doc(b.id).update({org,guest:name,phone,ages:ed.ages,players:pl,arrive:at,rooms:c,in:ed.ci,out:ed.co,total:Math.round(unit*c*nn),status:back?'pending':b.status,upd:now});
+    }
+    saveSeen();phoneQ=phone;ed=null;fmsg='';errs={};say('Booking updated'+(reconf?'. It needs to be confirmed again.':''));
+  }catch(e){fmsg='Could not update: '+(e.message||e.code||'');}
+  render();
+}
+document.querySelectorAll('[data-i]').forEach(e=>e.insertAdjacentHTML('afterbegin',I(e.dataset.i,14)));
+init();
+</script></body></html>
